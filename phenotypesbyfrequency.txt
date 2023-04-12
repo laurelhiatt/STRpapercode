@@ -1,0 +1,587 @@
+     51 Autosomal dominant inheritance
+     23 Dysarthria
+     17 Dysphagia
+     13 Seizure
+     13 Hyperreflexia
+     13 Cerebellar atrophy
+     12 Tremor
+     12 Adult onset
+     11 Spasticity
+     11 Nystagmus
+     11 Dementia
+     10 Progressive cerebellar ataxia
+     10 Clinodactyly of the 5th finger
+      9 Limb ataxia
+      9 Intellectual disability
+      9 Autosomal recessive inheritance
+      9 Ataxia
+      8 X-linked recessive inheritance
+      8 Proptosis
+      8 Muscle spasm
+      8 Hypotonia
+      8 Gait ataxia
+      8 Fasciculations
+      7 Ptosis
+      7 Muscle weakness
+      7 Dysmetria
+      7 Broad forehead
+      6 Tetralogy of Fallot
+      6 Slow saccadic eye movements
+      6 Skeletal muscle atrophy
+      6 Short 5th finger
+      6 Sensory neuropathy
+      6 Rigidity
+      6 Preauricular pit
+      6 Peripheral neuropathy
+      6 Myoclonus
+      6 Hyporeflexia
+      6 Gaze-evoked nystagmus
+      6 Elevated circulating creatine kinase concentration
+      6 Depression
+      6 Chorea
+      6 Bradykinesia
+      6 Babinski sign
+      5 Urinary incontinence
+      5 Scoliosis
+      5 Proximal placement of thumb
+      5 Proximal muscle weakness
+      5 Progressive
+      5 Parkinsonism
+      5 Micropenis
+      5 Microcephaly
+      5 Impaired vibratory sensation
+      5 Heterogeneous
+      5 Genetic anticipation
+      5 Generalized hypotonia
+      5 Dysmetric saccades
+      5 Dysdiadochokinesis
+      5 Distal muscle weakness
+      5 Brachydactyly
+      5 Abnormal pyramidal sign
+      4 Slowly progressive
+      4 Sleep apnea
+      4 Pseudobulbar paralysis
+      4 Nonprogressive
+      4 Jerk-locked premyoclonus spikes
+      4 Incoordination
+      4 Impaired smooth pursuit
+      4 Impaired horizontal smooth pursuit
+      4 High palate
+      4 Global developmental delay
+      4 Gliosis
+      4 Giant somatosensory evoked potentials
+      4 External ophthalmoplegia
+      4 Enhancement of the C-reflex
+      4 Dystonia
+      4 Distal amyotrophy
+      4 Depressed nasal bridge
+      4 Delayed speech and language development
+      4 Degeneration of the lateral corticospinal tracts
+      4 Degeneration of anterior horn cells
+      4 Bilateral tonic-clonic seizure
+      4 Amyotrophic lateral sclerosis
+      3 X-linked inheritance
+      3 Waddling gait
+      3 Vesicoureteral reflux
+      3 Ventriculomegaly
+      3 Uterus didelphys
+      3 Urinary bladder sphincter dysfunction
+      3 Ureteropelvic junction obstruction
+      3 Ulnar deviation of the 2nd finger
+      3 Truncal ataxia
+      3 Supranuclear ophthalmoplegia
+      3 Spinocerebellar tract degeneration
+      3 Small thenar eminence
+      3 Shortening of all middle phalanges of the fingers
+      3 Short metacarpal
+      3 Short hallux
+      3 Short first metatarsal
+      3 Short 2nd toe
+      3 Short 1st metacarpal
+      3 Sensorineural hearing impairment
+      3 Respiratory distress
+      3 Renal insufficiency
+      3 Pyelonephritis
+      3 Pseudoepiphyses
+      3 Postural instability
+      3 Pes planus
+      3 Optic atrophy
+      3 Olivopontocerebellar atrophy
+      3 Morphological abnormality of the pyramidal tract
+      3 Longitudinal vaginal septum
+      3 Joint laxity
+      3 Hypospadias
+      3 Hydrocephalus
+      3 Hearing impairment
+      3 Hallux varus
+      3 EEG with photoparoxysmal response
+      3 Dilated fourth ventricle
+      3 Delayed tarsal ossification
+      3 Delayed ossification of carpal bones
+      3 Decreased sensory nerve conduction velocity
+      3 Chordee
+      3 Childhood onset
+      3 Bulbar palsy
+      3 Bifid scrotum
+      3 Anxiety
+      3 Abnormality of extrapyramidal motor function
+      3 Abnormal autonomic nervous system physiology
+      2 Young adult onset
+      2 X-linked dominant inheritance
+      2 Wide nasal bridge
+      2 Weight loss
+      2 Weakness of facial musculature
+      2 Urethral atresia
+      2 Transposition of the great arteries
+      2 Tracheoesophageal fistula
+      2 Thin upper lip vermilion
+      2 Testicular atrophy
+      2 Synophrys
+      2 Short stature
+      2 Short phalanx of finger
+      2 Short middle phalanx of the 5th finger
+      2 Short humerus
+      2 Short femoral neck
+      2 Short clavicles
+      2 Severe short stature
+      2 Severe global developmental delay
+      2 Scanning speech
+      2 Rimmed vacuoles
+      2 Respiratory failure
+      2 Recurrent hand flapping
+      2 Prominent nasal bridge
+      2 Premature ovarian insufficiency
+      2 Postural tremor
+      2 Positive Romberg sign
+      2 Platyspondyly
+      2 Pectus excavatum
+      2 Osteoarthritis
+      2 Obsessive-compulsive trait
+      2 Neuronal loss in central nervous system
+      2 Neonatal respiratory distress
+      2 Neonatal onset
+      2 Narrow chest
+      2 Myotonia
+      2 Myopathic facies
+      2 Myoclonic tremor
+      2 Myalgia
+      2 Migraine
+      2 Micrognathia
+      2 Mask-like facies
+      2 Macrotia
+      2 Lumbar hyperlordosis
+      2 Low-set ears
+      2 Long upper lip
+      2 Long philtrum
+      2 Limb muscle weakness
+      2 Kyphosis
+      2 Juvenile onset
+      2 Isomerism
+      2 Irregular epiphyses
+      2 Intrauterine growth retardation
+      2 Intention tremor
+      2 Intellectual disability, severe
+      2 Intellectual disability, mild
+      2 Increased variability in muscle fiber diameter
+      2 Incomplete penetrance
+      2 Hypothyroidism
+      2 Hypogonadism
+      2 Hypertrophic cardiomyopathy
+      2 Hypertonia
+      2 Hypertelorism
+      2 Hypercapnia
+      2 Hyperactivity
+      2 Hydronephrosis
+      2 High forehead
+      2 Hand polydactyly
+      2 Hallucinations
+      2 Genu varum
+      2 Genu valgum
+      2 Genetic anticipation with paternal anticipation bias
+      2 Generalized myoclonic seizure
+      2 Gait disturbance
+      2 Frontal balding
+      2 Flexion contracture
+      2 Fetal onset
+      2 Feeding difficulties in infancy
+      2 Facial palsy
+      2 Epiphyseal dysplasia
+      2 Epicanthus
+      2 Enlarged kidney
+      2 EMG: myopathic abnormalities
+      2 EEG with irregular generalized spike and wave complexes
+      2 Disproportionate short-limb short stature
+      2 Dilated cardiomyopathy
+      2 Diffuse cerebral atrophy
+      2 Difficulty walking
+      2 Diabetes mellitus
+      2 Delusions
+      2 Delayed epiphyseal ossification
+      2 Decreased motor nerve conduction velocity
+      2 Decreased amplitude of sensory action potentials
+      2 Congestive heart failure
+      2 Cognitive impairment
+      2 Coarse facial features
+      2 Cleft palate
+      2 Choreoathetosis
+      2 Cerebral atrophy
+      2 Behavioral abnormality
+      2 Atrioventricular canal defect
+      2 Areflexia
+      2 Anal atresia
+      2 Aggressive behavior
+      2 Action tremor
+      2 Absent radius
+      2 Abnormality of the vertebral column
+      2 Abnormality of eye movement
+      2 Abnormality of cardiovascular system morphology
+      2 Abnormal vertebral morphology
+      2 Abnormal EKG
+      1 Y-shaped metacarpals
+      1 Wormian bones
+      1 Wide pubic symphysis
+      1 Wide anterior fontanel
+      1 Visual field defect
+      1 Vestibular areflexia
+      1 Vertical supranuclear gaze palsy
+      1 V4
+      1 Urinary urgency
+      1 Upslanted palpebral fissure
+      1 Unsteady gait
+      1 Ulnar metaphyseal irregularity
+      1 Ulnar deviation of the wrist
+      1 Ulnar deviation of the hand
+      1 Type 2 muscle fiber atrophy
+      1 Truncal obesity
+      1 Trigonocephaly
+      1 Triangular face
+      1 Tonic seizure
+      1 Tongue fasciculations
+      1 Tongue atrophy
+      1 Toe clinodactyly
+      1 Thickened calvaria
+      1 Thick vermilion border
+      1 Testicular dysgenesis
+      1 Telecanthus
+      1 Tachycardia
+      1 Syringomyelia
+      1 Syntelencephaly
+      1 Syncope
+      1 Supernumerary tooth
+      1 Strabismus
+      1 Stereotypical body rocking
+      1 Spondylolysis
+      1 Spondylolisthesis
+      1 Spinocerebellar atrophy
+      1 Specific learning disability
+      1 Spatulate ribs
+      1 Spastic tetraparesis
+      1 Sparse pubic hair
+      1 Somatic sensory dysfunction
+      1 Small epiphyses of the phalanges of the hand
+      1 Small epiphyses
+      1 Sloping forehead
+      1 Single transverse palmar crease
+      1 Short ribs
+      1 Short neck
+      1 Short middle phalanx of the 2nd finger
+      1 Short distal phalanx of finger
+      1 Sensorimotor neuropathy
+      1 Semilobar holoprosencephaly
+      1 Self-biting
+      1 Saccadic smooth pursuit
+      1 Round face
+      1 Rod-cone dystrophy
+      1 Restrictive ventilatory defect
+      1 Resting tremor
+      1 Respiratory insufficiency due to muscle weakness
+      1 Respiratory insufficiency
+      1 Relative macrocephaly
+      1 Reduced visual acuity
+      1 Reduced forced vital capacity
+      1 Recurrent infections
+      1 Radial metaphyseal irregularity
+      1 Radial head subluxation
+      1 Progressive visual loss
+      1 Progressive ptosis
+      1 Profound global developmental delay
+      1 Preaxial foot polydactyly
+      1 Postnatal growth retardation
+      1 Posteriorly rotated ears
+      1 Postaxial foot polydactyly
+      1 Poor fine motor coordination
+      1 Poor eye contact
+      1 Poor coordination
+      1 Polyhydramnios
+      1 Pigmentary retinopathy
+      1 Pes cavus
+      1 Personality changes
+      1 Persistent open anterior fontanelle
+      1 Periventricular heterotopia
+      1 Periorbital fullness
+      1 Pectus carinatum
+      1 Paroxysmal atrial fibrillation
+      1 Parietal bossing
+      1 Paresthesia
+      1 Paranoia
+      1 Panhypopituitarism
+      1 Palpitations
+      1 Pachygyria
+      1 Ovoid vertebral bodies
+      1 Orofacial dyskinesia
+      1 Oral cleft
+      1 Optic disc pallor
+      1 Ophthalmoplegia
+      1 Oligospermia
+      1 Oculomotor apraxia
+      1 Obsessive-compulsive behavior
+      1 Nocturnal hypoventilation
+      1 Neck muscle weakness
+      1 Neck flexor weakness
+      1 Nasal speech
+      1 Narrow forehead
+      1 Mutism
+      1 Muscular dystrophy
+      1 Monkey wrench femoral neck
+      1 Moderately short stature
+      1 Mitral valve prolapse
+      1 Mitochondrial malic enzyme reduced
+      1 Miosis
+      1 Mild short stature
+      1 Midface retrusion
+      1 Middle age onset
+      1 Microphthalmia
+      1 Microcornea
+      1 Metaphyseal widening
+      1 Metacarpophalangeal joint hyperextensibility
+      1 Mesoaxial hand polydactyly
+      1 Mental deterioration
+      1 Memory impairment
+      1 Mandibular prognathia
+      1 Malar flattening
+      1 Macular degeneration
+      1 Macroorchidism, postpubertal
+      1 Macrocephaly
+      1 Lower limb spasticity
+      1 Loss of consciousness
+      1 Long second metacarpal
+      1 Long palpebral fissure
+      1 Long face
+      1 Lobar holoprosencephaly
+      1 Limited shoulder movement
+      1 Limited hip movement
+      1 Limited hip extension
+      1 Limited elbow extension
+      1 Limb dystonia
+      1 Leukoencephalopathy
+      1 Late onset
+      1 Large forehead
+      1 Large foramen magnum
+      1 Lack of insight
+      1 Knee dislocation
+      1 Joint stiffness
+      1 Irritability
+      1 Irregular vertebral endplates
+      1 Irregular menstruation
+      1 Irregular carpal bones
+      1 Iridescent posterior subcapsular cataract
+      1 Intellectual disability, progressive
+      1 Intellectual disability, moderate
+      1 Insulin insensitivity
+      1 Infantile spasms
+      1 Infantile onset
+      1 Ineffective esophageal peristalsis
+      1 Increased susceptibility to fractures
+      1 Increased endomysial connective tissue
+      1 Increased circulating gonadotropin level
+      1 Increased bone mineral density
+      1 Increased CSF protein
+      1 Impulsivity
+      1 Impotence
+      1 Impaired tandem gait
+      1 Impaired pursuit initiation and maintenance
+      1 Impaired proprioception
+      1 Impaired pain sensation
+      1 Impaired distal vibration sensation
+      1 Impaired distal tactile sensation
+      1 Hypsarrhythmia
+      1 Hypoxemia
+      1 Hypoventilation
+      1 Hypotelorism
+      1 Hypoplastic scapulae
+      1 Hypoplastic iliac wing
+      1 Hypoplastic frontal sinuses
+      1 Hypoplasia of the uterus
+      1 Hypoplasia of the odontoid process
+      1 Hypohidrosis
+      1 Hypodontia
+      1 Hypermetropia
+      1 Hyperlordosis
+      1 Hyperkeratosis
+      1 Hyperhidrosis
+      1 Hoarse voice
+      1 Hip osteoarthritis
+      1 Hip dislocation
+      1 Highly arched eyebrow
+      1 High, narrow palate
+      1 Head tremor
+      1 Gynecomastia
+      1 Growth delay
+      1 Gowers sign
+      1 Global brain atrophy
+      1 Genu recurvatum
+      1 Generalized joint laxity
+      1 Gaze-evoked horizontal nystagmus
+      1 Gastrointestinal dysmotility
+      1 Ganglioneuroma
+      1 Ganglioneuroblastoma
+      1 Frontal release signs
+      1 Frontal lobe dementia
+      1 Frontal bossing
+      1 Frequent falls
+      1 Fragmented, irregular epiphyses
+      1 Fragmented epiphyses
+      1 Foot dorsiflexor weakness
+      1 Folate-dependent fragile site at Xq28
+      1 Focal-onset seizure
+      1 Focal motor seizure
+      1 Focal dystonia
+      1 Flat face
+      1 Flat acetabular roof
+      1 Flared femoral metaphysis
+      1 First degree atrioventricular block
+      1 Finger syndactyly
+      1 Fetal distress
+      1 Fetal cystic hygroma
+      1 Female infertility
+      1 Feeding difficulties
+      1 Febrile seizure (within the age range of 3 months to 6 years)
+      1 Fatty replacement of skeletal muscle
+      1 Facial-lingual fasciculations
+      1 Facial myokymia
+      1 Facial diplegia
+      1 Excessive daytime somnolence
+      1 Erratic myoclonus
+      1 Episodic vomiting
+      1 Epileptic encephalopathy
+      1 Epicanthus inversus
+      1 Enamel hypoplasia
+      1 Elevated circulating follicle stimulating hormone level
+      1 Edema
+      1 EMG: neuropathic changes
+      1 EMG: myotonic discharges
+      1 EMG: decremental response of compound muscle action potential to repetitive nerve stimulation
+      1 EEG with burst suppression
+      1 EEG abnormality
+      1 Dyspnea
+      1 Dysphonia
+      1 Dyskinesia
+      1 Duane anomaly
+      1 Drooling
+      1 Downslanted palpebral fissures
+      1 Dorsal column degeneration
+      1 Disinhibition
+      1 Diplopia
+      1 Dilation of lateral ventricles
+      1 Diarrhea
+      1 Dental crowding
+      1 Delayed pubic bone ossification
+      1 Delayed gross motor development
+      1 Delayed eruption of primary teeth
+      1 Delayed eruption of permanent teeth
+      1 Delayed ability to walk
+      1 Deep philtrum
+      1 Decreased testicular size
+      1 Decreased response to growth hormone stimulation test
+      1 Decreased pyruvate carboxylase activity
+      1 Decreased nerve conduction velocity
+      1 Decreased heart rate variability
+      1 Decreased fetal movement
+      1 Decreased fertility
+      1 Decreased circulating total IgM
+      1 Decreased circulating IgG level
+      1 Cutaneous syndactyly
+      1 Cupped ear
+      1 Coxa vara
+      1 Coxa valga
+      1 Cough
+      1 Corneal ulceration
+      1 Corneal scarring
+      1 Contracture of the proximal interphalangeal joint of the 5th finger
+      1 Congenital onset
+      1 Congenital macroorchidism
+      1 Confusion
+      1 Cone-shaped epiphyses of the phalanges of the hand
+      1 Chronic pain
+      1 Chronic constipation
+      1 Cholelithiasis
+      1 Childhood onset short-limb short stature
+      1 Cervical ribs
+      1 Cervical cord compression
+      1 Cerebral cortical atrophy
+      1 Central hypoventilation
+      1 Central diabetes insipidus
+      1 Cataract
+      1 Carpal bone hypoplasia
+      1 Cardiomyopathy
+      1 Camptodactyly
+      1 Calf muscle pseudohypertrophy
+      1 Calf muscle hypertrophy
+      1 CSF pleocytosis
+      1 Broad-based gait
+      1 Broad thumb
+      1 Broad hallux
+      1 Broad foot
+      1 Broad femoral neck
+      1 Brain atrophy
+      1 Bowing of the vocal cords
+      1 Bowel incontinence
+      1 Blue sclerae
+      1 Blepharospasm
+      1 Blepharophimosis
+      1 Bilateral ptosis
+      1 Bifid uvula
+      1 Beaking of vertebral bodies
+      1 Axonal loss
+      1 Axial hypotonia
+      1 Axial dystonia
+      1 Avascular necrosis of the capital femoral epiphysis
+      1 Autophagic vacuoles
+      1 Autism
+      1 Atrophy of the dentate nucleus
+      1 Atrial flutter
+      1 Atrial fibrillation
+      1 Atlantoaxial dislocation
+      1 Aspiration
+      1 Arthralgia
+      1 Arrhythmia
+      1 Areflexia of lower limbs
+      1 Apraxia
+      1 Apnea
+      1 Aplastic clavicle
+      1 Apathy
+      1 Anteverted nares
+      1 Amenorrhea
+      1 Ambiguous genitalia
+      1 Alobar holoprosencephaly
+      1 Agitation
+      1 Agenesis of corpus callosum
+      1 Aganglionic megacolon
+      1 Advanced ossification of carpal bones
+      1 Absent paranasal sinuses
+      1 Absent frontal sinuses
+      1 Absent Achilles reflex
+      1 Abnormality of visual evoked potentials
+      1 Abnormality of the mouth
+      1 Abnormality of temperature regulation
+      1 Abnormal vestibulo-ocular reflex
+      1 Abnormal head movements
+      1 Abnormal facility in opposing the shoulders
+      1 Abnormal facial shape
+      1 Abnormal electrooculogram
+      1 Abnormal echocardiogram
+      1 Abnormal cerebral white matter morphology
+      1 6 metacarpals
+      1 4-5 toe syndactyly
+      1 3-4 finger syndactyly
+      1 2nd-5th toe middle phalangeal hypoplasia
