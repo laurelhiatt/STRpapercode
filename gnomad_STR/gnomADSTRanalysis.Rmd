@@ -17,11 +17,64 @@ options(stringsAsFactors = FALSE)
 
 ## This is where I will put cool explanations of things
 
-```{r data}
-#gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t')
+```{r import}
+gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t')
 
-#STR_table <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomad_STR/STR_table_04072023.csv')
+STR_table <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/STR_table_04072023.csv')
 
+```
+
+
+## This clean up helps the STR resource table match the gnomad data
+``` {r cleanup}
+#cleaning up table to match gnomad syntax
+STR_table$gene[STR_table$gene == "AFF2/FMR2"] <- "AFF2"
+STR_table$gene[STR_table$gene == "MARCH6"] <- "MARCHF6"
+STR_table$gene[STR_table$gene == "C9orf72"] <- "C9ORF72"
+STR_table$gene[STR_table$gene == "ATXN8OS/ATXN8"] <- "ATXN8OS"
+STR_table$gene[STR_table$gene == "NUTM2B-AS1/NUTM2B-AS1"] <- "NUTM2B-AS1"
+STR_table$gene[STR_table$gene == "ARX" & STR_table$stop_hg38 == 25013697] <- "ARX_1"
+STR_table$gene[STR_table$gene == "ARX" & STR_table$stop_hg38 == 25013565] <- "ARX_2"
+STR_table$gene[STR_table$gene == "HOXA13" & STR_table$stop_hg38 == 27199966] <- "HOXA13_1"
+STR_table$gene[STR_table$gene == "HOXA13" & STR_table$stop_hg38 == 27199861] <- "HOXA13_2"
+STR_table$gene[STR_table$gene == "HOXA13" & STR_table$stop_hg38 == 27199732] <- "HOXA13_3"
+
+```
+
+## This is just to check and see what doesn't match
+``` {r checkdata}
+unique(gnomADSTRcalls$Id) -> genelist
+unique(STR_table$gene) -> tablegenelist
+sort(tablegenelist) -> tablegenelist
+
+
+# what are the differences between the table and the gnomad gene list
+tablegenelist[!(tablegenelist %in% genelist)]
+
+genelist[!(genelist %in% tablegenelist)]
+
+# what are the same genesbetween the table and the gnomad gene list
+tablegenelist[(tablegenelist %in% genelist)]
+```
+
+## Let's merge some data
+
+```{r merge}
+STR_table_clean <-subset(STR_table, select=c("disease_id", "gene",
+                                             "repeatunit_ref", "Inheritance",
+                                             "type", "normal_min", "normal_max",
+                                             "intermediate_min", "intermediate_max",
+                                             "pathogenic_min", "pathogenic_max",
+                                             "repeat_unit_lenth", "age_onset_min",
+                                             "age_onset_max", "novel", "repeatunit_path_norm"))
+
+STR_table_clean <- STR_table_clean %>%
+  rename("Id" = "gene")
+
+
+gnomADSTRcalls$AgeMax = as.numeric(str_sub(gnomADSTRcalls$Age,-2,-1)) # get last two char in Age. Assumes all <100
+
+total <- merge(STR_table_clean,gnomADSTRcalls,by="Id")
 ```
 
 ## Including Plots
