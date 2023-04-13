@@ -1,0 +1,35 @@
+---
+title: "gnomADSTRanalysis"
+author: "Laurel Hiatt"
+date: "2023-04-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library('dplyr')
+library('stringr')
+library('ggplot2')
+library('cowplot')
+theme_set(theme_cowplot())
+options(stringsAsFactors = FALSE)
+```
+
+## This is where I will put cool explanations of things
+
+```{r data}
+#gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t')
+
+#STR_table <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomad_STR/STR_table_04072023.csv')
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
