@@ -17,6 +17,10 @@ options(stringsAsFactors = FALSE)
 
 ## This is where I will put cool explanations of things
 
+### Summary of STR table
+
+### Summary of gnomADSTRcalls
+
 ```{r import}
 gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t')
 
@@ -75,6 +79,69 @@ STR_table_clean <- STR_table_clean %>%
 gnomADSTRcalls$AgeMax = as.numeric(str_sub(gnomADSTRcalls$Age,-2,-1)) # get last two char in Age. Assumes all <100
 
 total <- merge(STR_table_clean,gnomADSTRcalls,by="Id")
+```
+
+## Let's get a subset of the merged data (optional)
+``` {r subset}
+total <- sample_n(total, 10000)
+```
+
+## Let's Ensure Allele2 > Allele1
+
+``` {r allelecheck}
+table(gnomADSTRcalls$Allele2 >= gnomADSTRcalls$Allele1)
+
+```
+
+## Let's look at Allele2 compared to Allele2UsingOfftargetRegions
+Consider plotting a loci with Allele2 AND Allele2UsingOffTarget (sanity check)
+Scatter (look for outliers in plot, maybe draw line of where we expect error)
+Could use Allele2UOT with more confidence…
+
+``` {r allele2check}
+
+ggplot(total) + geom_point(aes(x = Allele2, y = Allele2UsingOfftargetRegions, col=Id)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ylim(0,400)
+```
+
+## Let's see if variants fall into type by category
+``` {r type}
+ggplot(total) + geom_point(aes(x = Id, y = Allele2UsingOfftargetRegions, col=type)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + facet_grid(~type, scales = "free_x") + ylim(0,4000)
+
+```
+
+## Question 1
+Allele size beyond pathogenic in literature
+Penetrance lower than expected?
+
+```{r Q1}
+table(total$Allele2 >=  total$pathogenic_max)
+table(total$Allele2UsingOfftargetRegion >=  total$pathogenic_max)
+
+# Create a logical vector to represent whether x > y for each row
+x_greater_than_y <- total$Allele2 > total$pathogenic_max
+
+# Use aggregate() to count occurrences of x > y by z value
+result <- aggregate(x_greater_than_y, by = list(total$Id), FUN = sum)
+
+# Rename the columns for clarity
+colnames(result) <- c("Id", "Allele2>PathMax")
+
+print(result)
+
+#ggplot(total) +
+ # geom_histogram(aes(x = Allele2, fill = Id), alpha = 0.5) + facet_wrap(~Allele2 > pathogenic_max, scales = 'free_y') + theme(legend.position = "none")
+```
+
+## Question 2
+Are there individuals in gnomad older than typical age of onset with pathogenic allele size? 
+Penetrance lower than expected?
+Age of onset max and age_max (but consider going to age min of range) & allele2* > pathogenic age min
+Could also do pathogenic age min - # to increase wiggle
+Number for each locus: how many individuals, and what sizes are the allele
+Off target would be nice… because gnomad uses conservative estimates
+
+```{r Q2}
+
 ```
 
 ## Including Plots
