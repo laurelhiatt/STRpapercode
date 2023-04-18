@@ -22,11 +22,20 @@ options(stringsAsFactors = FALSE)
 
 ### Summary of gnomADSTRcalls
 
+
+### To do
+https://gnomad.broadinstitute.org/news/2022-01-the-addition-of-short-tandem-repeat-calls-to-gnomad/
 ```{r import}
-gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t')
+gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t', stringsAsFactors = FALSE)
 
-STR_table <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/STR_table_04072023.csv')
+STR_table <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/STR_table_04072023.csv', stringsAsFactors = FALSE)
 
+#str(STR_table)
+
+#str(gnomADSTRcalls)
+
+STR_table$pathogenic_max[STR_table$pathogenic_max == "11,000"] <- 11000
+STR_table$pathogenic_max <- as.integer(STR_table$pathogenic_max)
 ```
 
 
@@ -60,10 +69,12 @@ genelist[!(genelist %in% tablegenelist)]
 
 # what are the same genesbetween the table and the gnomad gene list
 tablegenelist[(tablegenelist %in% genelist)]
+length(tablegenelist[(tablegenelist %in% genelist)])
 ```
 
 ## Let's merge some data
-
+### We are also going to make some new age columns
+### And then we're separating out the genotype confidence intervals
 ```{r merge}
 STR_table_clean <-subset(STR_table, select=c("disease_id", "gene",
                                              "repeatunit_ref", "Inheritance",
@@ -77,14 +88,33 @@ STR_table_clean <- STR_table_clean %>%
   rename("Id" = "gene")
 
 
+gnomADSTRcalls$Age[gnomADSTRcalls$Age == '<20'] <- "00-19"
+gnomADSTRcalls$Age[gnomADSTRcalls$Age == '>80'] <- "81-99"
+
 gnomADSTRcalls$AgeMax = as.numeric(str_sub(gnomADSTRcalls$Age,-2,-1)) # get last two char in Age. Assumes all <100
 
+gnomADSTRcalls$AgeMin = as.numeric(str_sub(gnomADSTRcalls$Age,1,2)) # get last two char in Age. Assumes all <100
+
+
+gnomADSTRcalls[c("Allele1LowerBound", "Allele1HigherBound", "Allele2LowerBound", "Allele2HigherBound")] <- as.data.frame(do.call(rbind, strsplit(gsub("/", "-", gnomADSTRcalls$GenotypeConfidenceInterval), "-")), stringsAsFactors = FALSE)
+gnomADSTRcalls[c("Allele1LowerBound", "Allele1HigherBound", "Allele2LowerBound", "Allele2HigherBound")] <- lapply(gnomADSTRcalls[c("Allele1LowerBound", "Allele1HigherBound", "Allele2LowerBound", "Allele2HigherBound")], as.integer)
+
+gnomADSTRcalls[c("Allele1LowerBoundOTR", "Allele1HigherBoundOTR", "Allele2LowerBoundOTR", "Allele2HigherBoundOTR")] <- as.data.frame(do.call(rbind, strsplit(gsub("/", "-", gnomADSTRcalls$GenotypeConfidenceIntervalUsingOfftargetRegions), "-")), stringsAsFactors = FALSE)
+gnomADSTRcalls[c("Allele1LowerBoundOTR", "Allele1HigherBoundOTR", "Allele2LowerBoundOTR", "Allele2HigherBoundOTR")] <- lapply(gnomADSTRcalls[c("Allele1LowerBound", "Allele1HigherBoundOTR", "Allele2LowerBoundOTR", "Allele2HigherBoundOTR")], as.integer)
+
+
+table(gnomADSTRcalls$Age)
+
+table(gnomADSTRcalls$AgeMin)
+table(gnomADSTRcalls$AgeMax)
+
 total <- merge(STR_table_clean,gnomADSTRcalls,by="Id")
+
 ```
 
 ## Let's get a subset of the merged data (optional)
 ``` {r subset}
-total <- sample_n(total, 10000)
+#total <- sample_n(total, 10000)
 ```
 
 ## Let's Ensure Allele2 > Allele1
@@ -99,21 +129,86 @@ Consider plotting a loci with Allele2 AND Allele2UsingOffTarget (sanity check)
 Scatter (look for outliers in plot, maybe draw line of where we expect error)
 Could use Allele2UOT with more confidence…
 
-``` {r allele2check}
-
-ggplot(total) + geom_point(aes(x = Allele2, y = Allele2UsingOfftargetRegions, col=Id)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ylim(0,400)
+``` {r allele2check, fig.width=15}
+ggplot(gnomADSTRcalls) + geom_point(aes(x = Allele2, y = Allele2UsingOfftargetRegions, col=Id)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ylim(0,400)
 ```
+
+``` {r allele1check, fig.width=15}
+ggplot(gnomADSTRcalls) + geom_point(aes(x = Allele1, y = Allele1UsingOfftargetRegions, col=Id)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ylim(0,400)
+```
+
+``` {r allele1vs2check, fig.width=15}
+ggplot(gnomADSTRcalls) + geom_point(aes(x = Allele1, y = Allele2, col=Id)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ylim(0,400)
+```
+
+
+``` {r allele1vs2check, fig.width=15}
+ggplot(gnomADSTRcalls) + geom_point(aes(x = Allele1UsingOfftargetRegions, y = Allele2UsingOfftargetRegions, col=Id)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ylim(0,400)
+```
+
 
 ``` {r allele2check by loci, fig.width=15,fig.height=100}
 
-ggplot(total) + geom_point(aes(x = Allele2, y = Allele2UsingOfftargetRegions, col=repeatunit_path_norm)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + ylim(0,400) + facet_wrap(~Id, ncol=2, scales = "free")
+ggplot(gnomADSTRcalls) + geom_point(aes(x = Allele2, y = Allele2UsingOfftargetRegions, col=Motif)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position = "none") + facet_wrap(~Id, ncol=2, scales = "free") 
+```
+
+``` {r allele1check by loci, fig.width=15,fig.height=100}
+ggplot(gnomADSTRcalls) + geom_point(aes(x = Allele1, y = Allele1UsingOfftargetRegions, col=Motif)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position = "none") + facet_wrap(~Id, ncol=2, scales = "free") 
+```
+
+``` {r allele1vs2check by loci, fig.width=15,fig.height=100}
+
+ggplot(gnomADSTRcalls) + geom_point(aes(x = Allele1, y = Allele2, col=Motif)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position = "none") + ylim(0,400) + facet_wrap(~Id, ncol=2, scales = "free") 
+```
+
+``` {r lines}
+total_Hox1 <- subset(total, Id == 'HOXA13_1') # 3
+total_Hox2 <- subset(total, Id == 'HOXA13_2') # 3
+total_Hox3 <- subset(total, Id == 'HOXA13_3') # 3
+total_phox <- subset(total, Id == 'PHOX2B') # 3
+total_tbx1 <- subset(total, Id == 'TBX1') # 3
+total_zic2 <- subset(total, Id == 'ZIC2') # 3
+total_foxl2 <- subset(total, Id == 'FOXL2') # 3
+total_bean1 <- subset(total, Id == 'BEAN1') # 5
+total_rapgef2 <- subset(total, Id == 'RAPGEF2') # 5
+
+tail(sort(table(total_Hox1$Allele2)), 3)
+tail(sort(table(total_Hox2$Allele2)), 3)
+tail(sort(table(total_Hox3$Allele2)), 3)
+tail(sort(table(total_phox$Allele2)), 3)
+tail(sort(table(total_tbx1$Allele2)), 3)
+tail(sort(table(total_zic2$Allele2)), 3)
+tail(sort(table(total_foxl2$Allele2)), 3)
+tail(sort(table(total_bean1$Allele2)), 3)
+tail(sort(table(total_rapgef2$Allele2)), 3)
+
+
+
+unique(total_Hox1$End - total_Hox1$Start_0based)/3
+unique(total_Hox2$End - total_Hox2$Start_0based)/3
+unique(total_Hox3$End - total_Hox3$Start_0based)/3
+unique(total_phox$End - total_phox$Start_0based)/3
+unique(total_tbx1$End - total_tbx1$Start_0based)/3
+unique(total_zic2$End - total_zic2$Start_0based)/3
+unique(total_foxl2$End - total_foxl2$Start_0based)/3
+unique(total_bean1$End - total_bean1$Start_0based)/5
+unique(total_rapgef2$End - total_rapgef2$Start_0based)/5
+
+# conclusion: 3bp repeats are defaulting to range of loci, 5bp are not, they're just messy
+
+```
+
+https://stackoverflow.com/questions/6957549/overlaying-histograms-with-ggplot2-in-r
+``` {r histograms, fig.width=15,fig.height=100}
+ggplot(gnomADSTRcalls) + geom_histogram(aes(x = Allele1, fill = "Allele1", alpha = 0.2)) + geom_histogram(aes(x = Allele2, fill = "Allele2", alpha = 0.2)) + geom_histogram(aes(x = Allele1UsingOfftargetRegions, fill = "Allele1UsingOfftargetRegions", alpha = 0.2)) + geom_histogram(aes(x = Allele2UsingOfftargetRegions, fill = "Allele2UsingOfftargetRegions", alpha = 0.2)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + facet_wrap(~Id, ncol=2, scales = "free") 
+
+ggplot(gnomADSTRcalls) + geom_density(aes(x = Allele1, color = "Allele1", alpha = 0.2)) + geom_density(aes(x = Allele2, color = "Allele2", alpha = 0.2)) + geom_density(aes(x = Allele1UsingOfftargetRegions, color = "Allele1UsingOfftargetRegions", alpha = 0.2)) + geom_density(aes(x = Allele2UsingOfftargetRegions, color = "Allele2UsingOfftargetRegions", alpha = 0.2)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + facet_wrap(~Id, ncol=2, scales = "free") 
+
 ```
 
 ## Let's see if variants fall into type by category
 ``` {r type}
 ggplot(total) + geom_point(aes(x = Id, y = Allele2UsingOfftargetRegions, col=type)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) + facet_grid(~type, scales = "free_x") + ylim(0,4000) + scale_x_discrete(guide = guide_axis(check.overlap = TRUE))
-
-
 
 ```
 
@@ -124,14 +219,20 @@ Penetrance lower than expected?
 ```{r Q1}
 table(total$Allele2 >=  total$pathogenic_max)
 table(total$Allele2UsingOfftargetRegion >=  total$pathogenic_max)
+table(total$Allele2 >=  total$pathogenic_min)
+table(total$Allele2UsingOfftargetRegion >=  total$pathogenic_min)
+
+sum(result$Allele2_greater_than_path_max, na.rm= TRUE)
 
 # Create a logical vector to represent whether x > y for each row
-Allele2_greater_than_path_max <- as.numeric(total$Allele2) > as.numeric(total$pathogenic_max)
+Allele2_greater_than_path_max <- total$Allele2 > total$pathogenic_max
 
 # Use aggregate() to count occurrences of x > y by z value
-result1 <- aggregate(cbind(Allele2_greater_than_path_max), by = list(total$Id), FUN = sum)
+result1 <- aggregate(cbind(Allele2_greater_than_path_max), by = list(total$Id), FUN = sum, na.rm=TRUE)
 
-result2 <- aggregate(cbind(total$Allele2), by = list(total$Id), FUN = length)
+sum(result1$Allele2_greater_than_path_max)
+
+result2 <- aggregate(cbind(total$Allele2), by = list(total$Id), FUN = function(x) sum(!is.na(x)))
 
 result <- merge(result1,result2)
 
@@ -140,10 +241,12 @@ colnames(result) <- c("Id", "Count Allele2 > pathogenic_max", "Total L Allele2Lo
 
 result$proportion <- (result$`Count Allele2 > pathogenic_max`/result$`Total L Allele2Loci for Id`)
 
-
 print(result)
 #ggplot(total) +
  # geom_histogram(aes(x = Allele2, fill = Id), alpha = 0.5) + facet_wrap(~Allele2 > pathogenic_max, scales = 'free_y') + theme(legend.position = "none")
+
+#total_pabpn1 <- subset(total, Id == 'PABPN1') # 5
+#table(total_pabpn1$Allele2)
 ```
 
 ## Question 2
@@ -155,6 +258,8 @@ Number for each locus: how many individuals, and what sizes are the allele
 Off target would be nice… because gnomad uses conservative estimates
 
 ```{r Q2}
+
+total_subset <- total[complete.cases(total$AgeMax), ]
 
 # Apply the condition to each row of the data frame
 condition <- as.numeric(total_subset$Allele2) > as.numeric(total_subset$pathogenic_max) & as.numeric(total_subset$AgeMax) > as.numeric(total_subset$age_onset_max)
@@ -171,8 +276,6 @@ cat(result, sep = "\n")
 n_not_missing_age <- table(total$Age != "age_not_available")[2]
 
 # Create a logical vector to represent whether x > y for each row
-
-total_subset <- total[complete.cases(total$AgeMax), ]
 
 Allele2_greater_than_path_max_with_age <- ((as.numeric(total_subset$Allele2) > as.numeric(total_subset$pathogenic_max)) & (as.numeric(total_subset$AgeMax) > as.numeric(total_subset$age_onset_max)))
 
@@ -206,6 +309,29 @@ print(bigresult)
 
 ```
 
+
+## Detour with Confidence Regions
+"First, split it into two columns so we can plot it. I can think of a few plots that might be useful. Probably to start with, does the width of the confidence interval increase with allele2 size?"
+
+```{r sanitycheck}
+table(gnomADSTRcalls$Allele2LowerBound <= gnomADSTRcalls$Allele2 & gnomADSTRcalls$Allele2 <= gnomADSTRcalls$Allele2HigherBound)
+
+table(gnomADSTRcalls$Allele2LowerBoundOTR <= gnomADSTRcalls$Allele2UsingOfftargetRegions & gnomADSTRcalls$Allele2UsingOfftargetRegions <= gnomADSTRcalls$Allele2HigherBoundOTR)
+
+```
+
+```{r confinterveal, fig.width=15,fig.height=100}
+ggplot(gnomADSTRcalls, aes(x = gnomADSTRcalls$Allele2, y = (gnomADSTRcalls$Allele2HigherBound - gnomADSTRcalls$Allele2LowerBound), col=Id)) +
+  geom_point() + theme(legend.position = "none") + facet_wrap(~Id, ncol=2, scales = "free_x") +
+  labs(y = "Width of Allele2 Confidence Interval", x = "Allele2")
+```
+
+
+```{r confinterveal spread out}
+ggplot(gnomADSTRcalls, aes(x = gnomADSTRcalls$Allele2, y = (gnomADSTRcalls$Allele2HigherBound - gnomADSTRcalls$Allele2LowerBound), col=Id)) +
+  geom_point() + theme(legend.position = "none") + facet_grid(~disease)
+  labs(y = "Width of Allele2 Confidence Interval", x = "Allele2")
+```
 ## Including Plots
 
 You can also embed plots, for example:
