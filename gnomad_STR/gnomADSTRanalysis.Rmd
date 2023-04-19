@@ -12,6 +12,7 @@ library('stringr')
 library('ggplot2')
 library('cowplot')
 library("tidyverse")
+library("broom")
 theme_set(theme_cowplot())
 options(stringsAsFactors = FALSE)
 ```
@@ -154,9 +155,13 @@ for (locus in unique(gnomADSTRcalls$Id)) {
   ggsave(paste0(locus,'_allele2_age_available.png'))
 }
 
-
- wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
-             subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2)
+for (locus in unique(gnomADSTRcalls$Id)) {
+  ggplot(subset(gnomADSTRcalls, Id == locus)) + 
+    geom_histogram(aes(x = Allele2UsingOfftargetRegions, fill = Age), alpha = 0.5) + 
+    facet_wrap(~AgeMax == '_OTR_age_not_available', scales = 'free_y') +
+    ggtitle(locus)
+  ggsave(paste0(locus,'_OTR_allele2_age_available.png'))
+}
 ```
 
 ## PCR comparision
@@ -167,6 +172,23 @@ ggplot(gnomADSTRcalls) +
   facet_wrap(~PcrProtocol, scales = 'free_y') +
   ggtitle('PCR Protocol')
 
+
+wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
+             subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2)
+p <- tidy(wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
+             subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2))
+
+
+for (locus in unique(gnomADSTRcalls$Id)) {
+  cat(paste0(locus))
+  p <- tidy(wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
+             subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2))
+  cat('\n') 
+  cat("The statistic is ", cat(p$statistic))
+  cat('\n') 
+  cat("The p-value is ",cat(p$p.value))
+   cat('\n') 
+}
 ```
 
 ## Let's look at Allele2 compared to Allele2UsingOfftargetRegions
@@ -195,6 +217,9 @@ ggplot(gnomADSTRcalls) + geom_point(aes(x = Allele1UsingOfftargetRegions, y = Al
 ``` {r allele2check by loci, fig.width=15,fig.height=100}
 
 ggplot(gnomADSTRcalls) + geom_point(aes(x = Allele2, y = Allele2UsingOfftargetRegions, col=Motif)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position = "none") + facet_wrap(~Id, ncol=2, scales = "free") 
+
+
+ggplot(gnomADSTRcalls) + geom_point(aes(x = AlleleLargest, y = Allele2UsingOfftargetRegions, col=Motif)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position = "none") + facet_wrap(~Id, ncol=2, scales = "free") 
 ```
 
 ``` {r allele1check by loci, fig.width=15,fig.height=100}
@@ -227,8 +252,6 @@ tail(sort(table(total_foxl2$Allele2)), 3)
 tail(sort(table(total_bean1$Allele2)), 3)
 tail(sort(table(total_rapgef2$Allele2)), 3)
 
-
-
 unique(total_Hox1$End - total_Hox1$Start_0based)/3
 unique(total_Hox2$End - total_Hox2$Start_0based)/3
 unique(total_Hox3$End - total_Hox3$Start_0based)/3
@@ -256,6 +279,7 @@ unique(total_rapgef2$End - total_rapgef2$Start_0based)/5
 
 ```
 
+# Here we have the histograms, and there is a lot of overlap. So it is ugly.
 https://stackoverflow.com/questions/6957549/overlaying-histograms-with-ggplot2-in-r
 ``` {r histograms, fig.width=15,fig.height=100}
 ggplot(gnomADSTRcalls) + geom_histogram(aes(x = Allele1, fill = "Allele1", alpha = 0.2)) + geom_histogram(aes(x = Allele2, fill = "Allele2", alpha = 0.2)) + geom_histogram(aes(x = Allele1UsingOfftargetRegions, fill = "Allele1UsingOfftargetRegions", alpha = 0.2)) + geom_histogram(aes(x = Allele2UsingOfftargetRegions, fill = "Allele2UsingOfftargetRegions", alpha = 0.2)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + facet_wrap(~Id, ncol=2, scales = "free") 
