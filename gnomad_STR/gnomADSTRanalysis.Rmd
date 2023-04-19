@@ -144,7 +144,7 @@ table(gnomADSTRcalls$AlleleLargest >= gnomADSTRcalls$Allele1, useNA = "ifany")
 
 ```
 
-## Loop from harriet
+## Loop from harriet for allele distribution with age vs no age available
 ```{r loop}
 for (locus in unique(gnomADSTRcalls$Id)) {
   ggplot(subset(gnomADSTRcalls, Id == locus)) + 
@@ -155,8 +155,19 @@ for (locus in unique(gnomADSTRcalls$Id)) {
 }
 
 
+ wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
+             subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2)
 ```
 
+## PCR comparision
+``` {r PCR}
+
+ggplot(gnomADSTRcalls) + 
+  geom_histogram(aes(x = Allele2, fill = PcrProtocol), alpha = 0.5) + 
+  facet_wrap(~PcrProtocol, scales = 'free_y') +
+  ggtitle('PCR Protocol')
+
+```
 
 ## Let's look at Allele2 compared to Allele2UsingOfftargetRegions
 Consider plotting a loci with Allele2 AND Allele2UsingOffTarget (sanity check)
