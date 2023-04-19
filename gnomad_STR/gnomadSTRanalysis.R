@@ -6,9 +6,9 @@ theme_set(theme_cowplot())
 options(stringsAsFactors = FALSE)
 
 # Get data from here: https://gnomad.broadinstitute.org/downloads#v3-short-tandem-repeats
-gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t')
+#gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t')
 
-STR_table <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomad_STR/STR_table_04072023.csv')
+#STR_table <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomad_STR/STR_table_04072023.csv')
 
 
 #cleaning up table to match gnomad syntax

@@ -24,6 +24,12 @@ options(stringsAsFactors = FALSE)
 
 
 ### To do
+- use allele2lowerbound instead of allele2... woo!
+- if recessive, are both alleles >?
+- other stuff ####
+
+
+
 https://gnomad.broadinstitute.org/news/2022-01-the-addition-of-short-tandem-repeat-calls-to-gnomad/
 ```{r import}
 gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t', stringsAsFactors = FALSE)
@@ -70,6 +76,7 @@ genelist[!(genelist %in% tablegenelist)]
 # what are the same genesbetween the table and the gnomad gene list
 tablegenelist[(tablegenelist %in% genelist)]
 length(tablegenelist[(tablegenelist %in% genelist)])
+# CCG in HTT is non-pathogenic but also sometimes surveyed; there might be some association with disease as founder effect?
 ```
 
 ## Let's merge some data
@@ -118,11 +125,38 @@ total <- merge(STR_table_clean,gnomADSTRcalls,by="Id")
 ```
 
 ## Let's Ensure Allele2 > Allele1
+- Check max of allele1 and allele2 (na.rm = TRUE)
+
 
 ``` {r allelecheck}
-table(gnomADSTRcalls$Allele2 >= gnomADSTRcalls$Allele1)
+table(gnomADSTRcalls$Allele2 >= gnomADSTRcalls$Allele1, useNA = "ifany")
+pmax(gnomADSTRcalls$Allele1, gnomADSTRcalls$Allele2, na.rm = TRUE)
+
+gnomADSTRcalls
+
+
+gnomADSTRcalls_noallele2 <- gnomADSTRcalls[is.na(gnomADSTRcalls$Allele2),]
+table(gnomADSTRcalls_noallele2$Allele1)
+
+gnomADSTRcalls$AlleleLargest <- pmax(gnomADSTRcalls$Allele1, gnomADSTRcalls$Allele2, na.rm = TRUE)
+table(gnomADSTRcalls$AlleleLargest)
+table(gnomADSTRcalls$AlleleLargest >= gnomADSTRcalls$Allele1, useNA = "ifany")
 
 ```
+
+## Loop from harriet
+```{r loop}
+for (locus in unique(gnomADSTRcalls$Id)) {
+  ggplot(subset(gnomADSTRcalls, Id == locus)) + 
+    geom_histogram(aes(x = Allele2, fill = Age), alpha = 0.5) + 
+    facet_wrap(~AgeMax == 'age_not_available', scales = 'free_y') +
+    ggtitle(locus)
+  ggsave(paste0(locus,'_allele2_age_available.png'))
+}
+
+
+```
+
 
 ## Let's look at Allele2 compared to Allele2UsingOfftargetRegions
 Consider plotting a loci with Allele2 AND Allele2UsingOffTarget (sanity check)
@@ -196,6 +230,19 @@ unique(total_rapgef2$End - total_rapgef2$Start_0based)/5
 
 # conclusion: 3bp repeats are defaulting to range of loci, 5bp are not, they're just messy
 
+
+#total_dmd <- subset(total, Id == 'DMD') # 5
+#table(total_dmd$Sex)
+# XX    XY 
+# 8167 10970 
+# XYs for X-linked inheritance are filtered out!!!!!
+
+
+#table(total_Hox1$Motif)
+#table(total_Hox2$Motif)
+#table(total_Hox3$Motif)
+
+
 ```
 
 https://stackoverflow.com/questions/6957549/overlaying-histograms-with-ggplot2-in-r
@@ -217,18 +264,38 @@ Allele size beyond pathogenic in literature
 Penetrance lower than expected?
 
 ```{r Q1}
-table(total$Allele2 >=  total$pathogenic_max)
+table(total$Allele2 >=  total$pathogenic_max, useNA = "ifany")
 table(total$Allele2UsingOfftargetRegion >=  total$pathogenic_max)
+
+# we care most about the min 
 table(total$Allele2 >=  total$pathogenic_min)
 table(total$Allele2UsingOfftargetRegion >=  total$pathogenic_min)
 
-sum(result$Allele2_greater_than_path_max, na.rm= TRUE)
+#Subs1<-subset(total, (!is.na(total$Allele2)) & (!is.na(total$pathogenic_max)))
+#table(Subs1$Allele2 >=  Subs1$pathogenic_max)
+# it's not NA in these columns that are making the discrepancy
+#Allele2_greater_than_path_max <- Subs1$Allele2 > Subs1$pathogenic_max
+#result1 <- aggregate(cbind(Allele2_greater_than_path_max), by = list(Subs1$Id), FUN = sum, na.rm=TRUE)
+
+#Subs2<-subset(total, (!is.na(total$Allele2)) & (!is.na(total$pathogenic_max)) & (!is.na(total$Id)))
+#table(Subs2$Allele2 >=  Subs2$pathogenic_max)
+# it's not the three columns so like... what is it
+
 
 # Create a logical vector to represent whether x > y for each row
-Allele2_greater_than_path_max <- total$Allele2 > total$pathogenic_max
+Allele2_greater_than_path_max <- total$Allele2 >= total$pathogenic_max
+table(Allele2_greater_than_path_max)
 
 # Use aggregate() to count occurrences of x > y by z value
 result1 <- aggregate(cbind(Allele2_greater_than_path_max), by = list(total$Id), FUN = sum, na.rm=TRUE)
+
+sum(result1$Allele2_greater_than_path_max)
+
+df_summary <- total %>%
+  group_by(Id) %>%
+  summarize(Allele2_greater_than_path_max = sum(Allele2 >= pathogenic_max, na.rm = TRUE))
+
+sum(df_summary$Allele2_greater_than_path_max)
 
 sum(result1$Allele2_greater_than_path_max)
 
@@ -236,10 +303,32 @@ result2 <- aggregate(cbind(total$Allele2), by = list(total$Id), FUN = function(x
 
 result <- merge(result1,result2)
 
+
+#MIN
+# Create a logical vector to represent whether x > y for each row
+Allele2_greater_than_path_min <- total$Allele2LowerBound >= total$pathogenic_min
+table(Allele2_greater_than_path_min)
+
+# Use aggregate() to count occurrences of x > y by z value
+result1 <- aggregate(cbind(Allele2_greater_than_path_min), by = list(total$Id), FUN = sum, na.rm=TRUE)
+
+sum(result1$Allele2_greater_than_path_min)
+
+result2 <- aggregate(cbind(total$Allele2), by = list(total$Id), FUN = function(x) sum(!is.na(x)))
+
+result <- merge(result1,result2)
+
+
 # Rename the columns of the result dataframe
 colnames(result) <- c("Id", "Count Allele2 > pathogenic_max", "Total L Allele2Loci for Id")
 
-result$proportion <- (result$`Count Allele2 > pathogenic_max`/result$`Total L Allele2Loci for Id`)
+result$percent<- (result$`Count Allele2 > pathogenic_max`/result$`Total L Allele2Loci for Id`)*100
+
+#### TAKE OUT SPACES!!!!!
+#### STRATIFY BY SEX FOR X-LINKED (eg, DMD)
+#### Look at AD, AR
+
+sum(result$Allele2_greater_than_path_max, na.rm= TRUE)
 
 print(result)
 #ggplot(total) +
@@ -248,6 +337,8 @@ print(result)
 #total_pabpn1 <- subset(total, Id == 'PABPN1') # 5
 #table(total_pabpn1$Allele2)
 ```
+
+Do i want to see how many alleles are within normal range? vs intermediate
 
 ## Question 2
 Are there individuals in gnomad older than typical age of onset with pathogenic allele size? 
@@ -262,7 +353,7 @@ Off target would be nice… because gnomad uses conservative estimates
 total_subset <- total[complete.cases(total$AgeMax), ]
 
 # Apply the condition to each row of the data frame
-condition <- as.numeric(total_subset$Allele2) > as.numeric(total_subset$pathogenic_max) & as.numeric(total_subset$AgeMax) > as.numeric(total_subset$age_onset_max)
+condition <- (total_subset$Allele2 >= total_subset$pathogenic_min) & (total_subset$AgeMin > total_subset$age_onset_max)
 
 # Use ifelse to print a message for each row where the condition is true
 result <- ifelse(condition, 
@@ -277,11 +368,15 @@ n_not_missing_age <- table(total$Age != "age_not_available")[2]
 
 # Create a logical vector to represent whether x > y for each row
 
-Allele2_greater_than_path_max_with_age <- ((as.numeric(total_subset$Allele2) > as.numeric(total_subset$pathogenic_max)) & (as.numeric(total_subset$AgeMax) > as.numeric(total_subset$age_onset_max)))
+Allele2_greater_than_path_max_with_age <- (total_subset$Allele2 > total_subset$pathogenic_max) & (total_subset$AgeMax > total_subset$age_onset_max)
 
-print(Allele2_greater_than_path_max_with_age)
+table(Allele2_greater_than_path_max_with_age)
 
 result1 <- aggregate(cbind(as.numeric(Allele2_greater_than_path_max_with_age)), by = list(total_subset$disease_id), FUN = sum)
+
+sum(result1$V1, na.rm= TRUE)
+
+
 result2 <- aggregate(cbind(total_subset$disease_id), by = list(total_subset$disease_id), FUN = length)
 
 result <- merge(result1,result2)
@@ -321,8 +416,13 @@ table(gnomADSTRcalls$Allele2LowerBoundOTR <= gnomADSTRcalls$Allele2UsingOfftarge
 ```
 
 ```{r confinterveal, fig.width=15,fig.height=100}
-ggplot(gnomADSTRcalls, aes(x = gnomADSTRcalls$Allele2, y = (gnomADSTRcalls$Allele2HigherBound - gnomADSTRcalls$Allele2LowerBound), col=Id)) +
-  geom_point() + theme(legend.position = "none") + facet_wrap(~Id, ncol=2, scales = "free_x") +
+
+#### CHECK IF ALLELE2 is NA, do table of ALLELE1 -- if they're small or NAs, whatever, but if they're big?? -- check if on X chromosome
+
+
+
+ggplot(gnomADSTRcalls, aes(x = Allele2, y = (Allele2HigherBound - Allele2LowerBound), col=Id)) +
+  geom_point() + theme(legend.position = "none") + facet_wrap(~Id, ncol=2, scales = "free") +
   labs(y = "Width of Allele2 Confidence Interval", x = "Allele2")
 ```
 
