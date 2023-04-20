@@ -165,7 +165,7 @@ for (locus in unique(gnomADSTRcalls$Id)) {
 ```
 
 ## PCR comparision
-``` {r PCR}
+``` {r PCR, fig.width=15,fig.height=10}
 
 ggplot(gnomADSTRcalls) + 
   geom_histogram(aes(x = Allele2, fill = PcrProtocol), alpha = 0.5) + 
@@ -179,16 +179,40 @@ p <- tidy(wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2,
              subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2))
 
 
+# for (locus in unique(gnomADSTRcalls$Id)) {
+#   cat(paste0(locus))
+#   p <- tidy(wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free' & Id == locus)$Allele2, 
+#              subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus'& Id == locus)$Allele2))
+#   cat('\n') 
+#   cat("The statistic is \n")
+#   cat(p$statistic)
+#   cat('\n') 
+#   cat("The p-value is \n")
+#   cat(p$p.value)
+#   cat('\n') 
+# }
+
+results <- data.frame()  # create an empty dataframe to store results
+
 for (locus in unique(gnomADSTRcalls$Id)) {
-  cat(paste0(locus))
-  p <- tidy(wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
-             subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2))
-  cat('\n') 
-  cat("The statistic is ", cat(p$statistic))
-  cat('\n') 
-  cat("The p-value is ",cat(p$p.value))
-   cat('\n') 
+  p <- tidy(wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free' & Id == locus)$Allele2, 
+                         subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus'& Id == locus)$Allele2))
+  results <- rbind(results, data.frame(Id = locus, statistic = p$statistic, p.value = p$p.value))
 }
+
+print(results)
+
+ggplot(results, aes(x = Id, y = p.value, color = Id)) +
+  geom_point() +
+  geom_hline(yintercept = 0.05, linetype = "dashed") +
+  labs(x = "Locus", y = "p-value", color = "Locus") +
+  theme_bw() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + theme(legend.position = "none")
+
+ggplot(results, aes(x = Id, y = -log10(p.value), color = Id)) +
+  geom_point() +
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed") +
+  labs(x = "Locus", y = "p-value", color = "Locus") +
+  theme_bw() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + theme(legend.position = "none") + scale_y_continuous(trans='log10')
 ```
 
 ## Let's look at Allele2 compared to Allele2UsingOfftargetRegions
@@ -294,6 +318,15 @@ ggplot(total) + geom_point(aes(x = Id, y = Allele2UsingOfftargetRegions, col=typ
 
 ```
 
+``` {r type}
+ggplot(total) + geom_point(aes(x = Id, y = Allele2, col=type)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) + facet_grid(~type, scales = "free_x") + ylim(0,400) + scale_x_discrete(guide = guide_axis(check.overlap = TRUE))
+
+```
+``` {r type}
+ggplot(total) + geom_point(aes(x = Id, y = AlleleLargest, col=type)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) + facet_grid(~type, scales = "free_x") + ylim(0,400) + scale_x_discrete(guide = guide_axis(check.overlap = TRUE))
+
+```
+
 ## Question 1
 Allele size beyond pathogenic in literature
 Penetrance lower than expected?
@@ -355,7 +388,7 @@ result <- merge(result1,result2)
 
 
 # Rename the columns of the result dataframe
-colnames(result) <- c("Id", "Count Allele2 > pathogenic_max", "Total L Allele2Loci for Id")
+colnames(result) <- c("Id", "Allele2>pathogenic_max", "Total_Allele2Loci_for_Id")
 
 result$percent<- (result$`Count Allele2 > pathogenic_max`/result$`Total L Allele2Loci for Id`)*100
 
