@@ -28,8 +28,7 @@ options(stringsAsFactors = FALSE)
 - use allele2lowerbound instead of allele2... woo!
 - if recessive, are both alleles >?
 - other stuff ####
-
-
+#### Look at AD, AR
 
 https://gnomad.broadinstitute.org/news/2022-01-the-addition-of-short-tandem-repeat-calls-to-gnomad/
 ```{r import}
@@ -118,9 +117,6 @@ table(gnomADSTRcalls$AgeMax)
 
 total <- merge(STR_table_clean,gnomADSTRcalls,by="Id")
 
-
-unique(STR_table$Mechanism)
-
 ```
 
 ## Let's get a subset of the merged data (optional)
@@ -133,14 +129,11 @@ unique(STR_table$Mechanism)
 
 
 ``` {r allelecheck}
-table(gnomADSTRcalls$Allele2 >= gnomADSTRcalls$Allele1, useNA = "ifany")
-pmax(gnomADSTRcalls$Allele1, gnomADSTRcalls$Allele2, na.rm = TRUE)
+#table(gnomADSTRcalls$Allele2 >= gnomADSTRcalls$Allele1, useNA = "ifany")
+#pmax(gnomADSTRcalls$Allele1, gnomADSTRcalls$Allele2, na.rm = TRUE)
 
-gnomADSTRcalls
-
-
-gnomADSTRcalls_noallele2 <- gnomADSTRcalls[is.na(gnomADSTRcalls$Allele2),]
-table(gnomADSTRcalls_noallele2$Allele1)
+# gnomADSTRcalls_noallele2 <- gnomADSTRcalls[is.na(gnomADSTRcalls$Allele2),]
+# table(gnomADSTRcalls_noallele2$Allele1)
 
 gnomADSTRcalls$AlleleLargest <- pmax(gnomADSTRcalls$Allele1, gnomADSTRcalls$Allele2, na.rm = TRUE)
 table(gnomADSTRcalls$AlleleLargest)
@@ -165,6 +158,20 @@ for (locus in unique(gnomADSTRcalls$Id)) {
     ggtitle(locus)
   ggsave(paste0(locus,'_OTR_allele2_age_available.png'))
 }
+
+table(gnomADSTRcalls$Age)
+
+# results <- data.frame()  # create an empty dataframe to store results
+# 
+# for (locus in unique(gnomADSTRcalls$Id)) {
+#   p <- tidy(ks.test(subset(gnomADSTRcalls, Age == 'age_not_available' & Id == locus)$Allele2, 
+#                          subset(gnomADSTRcalls, Age != 'age_not_available'& Id == locus)$Allele2))
+#   results <- rbind(results, data.frame(Id = locus, statistic = p$statistic, p.value = p$p.value))
+# }
+# 
+# print(results)
+
+# NOT ENOUGH Y DATA!!!
 ```
 
 ## PCR comparision
@@ -395,8 +402,7 @@ colnames(result) <- c("Id", "Allele2>pathogenic_min", "Total_Allele2Loci_for_Id"
 
 result$percent<- (result$`Allele2>pathogenic_min`/result$Total_Allele2Loci_for_Id)*100
 
-#### STRATIFY BY SEX FOR X-LINKED (eg, DMD)
-#### Look at AD, AR
+
 
 sum(result$Allele2_greater_than_path_max, na.rm= TRUE)
 
@@ -439,9 +445,6 @@ colnames(sex_result) <- c("Id", "Sex", "Allele2>pathogenic_min", "Total_Allele2L
 
 sex_result$percent<- (sex_result$`Allele2>pathogenic_min`/sex_result$Total_Allele2Loci_for_Id)*100
 
-#### STRATIFY BY SEX FOR X-LINKED (eg, DMD)
-#### Look at AD, AR
-
 sum(result$Allele2_greater_than_path_max, na.rm= TRUE)
 
 print(result)
@@ -471,7 +474,7 @@ calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
   return(df)
 }
 
-df_with_ci <- calculate_ci(sex_result, successes_col = "Allele2>pathogenic_min", trials_col = "Total_Allele2Loci_for_Id", conf_level = 0.95)
+sex_result <- calculate_ci(sex_result, successes_col = "Allele2>pathogenic_min", trials_col = "Total_Allele2Loci_for_Id", conf_level = 0.95)
 
 df_with_ci$lower_ci <- df_with_ci$lower_ci*100 
 df_with_ci$upper_ci <- df_with_ci$upper_ci*100 
@@ -556,10 +559,6 @@ table(gnomADSTRcalls$Allele2LowerBoundOTR <= gnomADSTRcalls$Allele2UsingOfftarge
 ```
 
 ```{r confinterveal, fig.width=15,fig.height=100}
-
-#### CHECK IF ALLELE2 is NA, do table of ALLELE1 -- if they're small or NAs, whatever, but if they're big?? -- check if on X chromosome
-
-
 
 ggplot(gnomADSTRcalls, aes(x = Allele2, y = (Allele2HigherBound - Allele2LowerBound), col=Id)) +
   geom_point() + theme(legend.position = "none") + facet_wrap(~Id, ncol=2, scales = "free") +
