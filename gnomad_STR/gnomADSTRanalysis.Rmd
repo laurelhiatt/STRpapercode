@@ -118,6 +118,9 @@ table(gnomADSTRcalls$AgeMax)
 
 total <- merge(STR_table_clean,gnomADSTRcalls,by="Id")
 
+
+unique(STR_table$Mechanism)
+
 ```
 
 ## Let's get a subset of the merged data (optional)
@@ -172,11 +175,11 @@ ggplot(gnomADSTRcalls) +
   facet_wrap(~PcrProtocol, scales = 'free_y') +
   ggtitle('PCR Protocol')
 
-
-wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
-             subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2)
-p <- tidy(wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
-             subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2))
+# 
+# wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
+#              subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2)
+# p <- tidy(wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
+#              subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2))
 
 
 # for (locus in unique(gnomADSTRcalls$Id)) {
@@ -351,25 +354,25 @@ table(total$Allele2UsingOfftargetRegion >=  total$pathogenic_min)
 
 
 # Create a logical vector to represent whether x > y for each row
-Allele2_greater_than_path_max <- total$Allele2 >= total$pathogenic_max
-table(Allele2_greater_than_path_max)
-
-# Use aggregate() to count occurrences of x > y by z value
-result1 <- aggregate(cbind(Allele2_greater_than_path_max), by = list(total$Id), FUN = sum, na.rm=TRUE)
-
-sum(result1$Allele2_greater_than_path_max)
-
-df_summary <- total %>%
-  group_by(Id) %>%
-  summarize(Allele2_greater_than_path_max = sum(Allele2 >= pathogenic_max, na.rm = TRUE))
-
-sum(df_summary$Allele2_greater_than_path_max)
-
-sum(result1$Allele2_greater_than_path_max)
-
-result2 <- aggregate(cbind(total$Allele2), by = list(total$Id), FUN = function(x) sum(!is.na(x)))
-
-result <- merge(result1,result2)
+# Allele2_greater_than_path_max <- total$AlleleLargest >= total$pathogenic_max
+# table(Allele2_greater_than_path_max)
+# 
+# # Use aggregate() to count occurrences of x > y by z value
+# result1 <- aggregate(cbind(Allele2_greater_than_path_max), by = list(total$Id), FUN = sum, na.rm=TRUE)
+# 
+# sum(result1$Allele2_greater_than_path_max)
+# 
+# df_summary <- total %>%
+#   group_by(Id) %>%
+#   summarize(Allele2_greater_than_path_max = sum(Allele2 >= pathogenic_max, na.rm = TRUE))
+# 
+# sum(df_summary$Allele2_greater_than_path_max)
+# 
+# sum(result1$Allele2_greater_than_path_max)
+# 
+# result2 <- aggregate(cbind(total$Allele2), by = list(total$Id), FUN = function(x) sum(!is.na(x)))
+# 
+# result <- merge(result1,result2)
 
 
 #MIN
@@ -388,11 +391,10 @@ result <- merge(result1,result2)
 
 
 # Rename the columns of the result dataframe
-colnames(result) <- c("Id", "Allele2>pathogenic_max", "Total_Allele2Loci_for_Id")
+colnames(result) <- c("Id", "Allele2>pathogenic_min", "Total_Allele2Loci_for_Id")
 
-result$percent<- (result$`Count Allele2 > pathogenic_max`/result$`Total L Allele2Loci for Id`)*100
+result$percent<- (result$`Allele2>pathogenic_min`/result$Total_Allele2Loci_for_Id)*100
 
-#### TAKE OUT SPACES!!!!!
 #### STRATIFY BY SEX FOR X-LINKED (eg, DMD)
 #### Look at AD, AR
 
@@ -407,6 +409,76 @@ print(result)
 ```
 
 Do i want to see how many alleles are within normal range? vs intermediate
+
+
+### Let's see about if we parse these out by sex
+Later, look at AD/AR
+```{r sex}
+
+total_sex <- subset(total, total$Inheritance == "XR" | total$Inheritance == "XD")
+
+table(total_sex$Inheritance)
+
+Allele2_greater_than_path_min <- total_sex$Allele2LowerBound >= total_sex$pathogenic_min
+table(Allele2_greater_than_path_min)
+
+# Use aggregate() to count occurrences of x > y by z value
+result1 <- aggregate(cbind(Allele2_greater_than_path_min) ~ Id + Sex, data = total_sex, FUN = sum, na.rm = TRUE)
+
+sum(result1$Allele2_greater_than_path_min)
+
+result2 <- aggregate(cbind(Allele2_greater_than_path_min) ~ Id + Sex, data = total_sex, FUN = function(x) sum(!is.na(x)))
+
+merge(result1,result2)
+
+sex_result <- result1 %>% inner_join( result2, 
+        by=c('Id', "Sex"))
+
+# Rename the columns of the result dataframe
+colnames(sex_result) <- c("Id", "Sex", "Allele2>pathogenic_min", "Total_Allele2Loci_for_Id")
+
+sex_result$percent<- (sex_result$`Allele2>pathogenic_min`/sex_result$Total_Allele2Loci_for_Id)*100
+
+#### STRATIFY BY SEX FOR X-LINKED (eg, DMD)
+#### Look at AD, AR
+
+sum(result$Allele2_greater_than_path_max, na.rm= TRUE)
+
+print(result)
+
+
+# https://cran.r-project.org/web/packages/interpretCI/vignettes/Confidence_interval_for_a_proportion.html
+# https://rcompanion.org/handbook/H_02.html
+
+
+library(DescTools)
+
+calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
+  
+  # Calculate the estimated proportion and confidence intervals for each row
+  est_props <- df[[successes_col]] / df[[trials_col]]
+  cis <- BinomCI(df[[successes_col]], df[[trials_col]], conf.level = conf_level, method = method)
+  
+  # Extract the lower and upper confidence interval bounds
+  lower_cis <- cis[, "lwr.ci"]
+  upper_cis <- cis[, "upr.ci"]
+  
+  # Add the confidence intervals to the original data frame
+  df$lower_ci <- lower_cis
+  df$upper_ci <- upper_cis
+  
+  # Return the updated data frame
+  return(df)
+}
+
+df_with_ci <- calculate_ci(sex_result, successes_col = "Allele2>pathogenic_min", trials_col = "Total_Allele2Loci_for_Id", conf_level = 0.95)
+
+df_with_ci$lower_ci <- df_with_ci$lower_ci*100 
+df_with_ci$upper_ci <- df_with_ci$upper_ci*100 
+
+
+```
+
 
 ## Question 2
 Are there individuals in gnomad older than typical age of onset with pathogenic allele size? 
