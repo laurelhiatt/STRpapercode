@@ -13,6 +13,7 @@ library('ggplot2')
 library('cowplot')
 library("tidyverse")
 library("broom")
+library(DescTools)
 theme_set(theme_cowplot())
 options(stringsAsFactors = FALSE)
 ```
@@ -28,6 +29,8 @@ options(stringsAsFactors = FALSE)
 - use allele2lowerbound instead of allele2... woo!
 - if recessive, are both alleles >?
 - other stuff ####
+- NMDS 
+- CI everywhere
 #### Look at AD, AR
 
 https://gnomad.broadinstitute.org/news/2022-01-the-addition-of-short-tandem-repeat-calls-to-gnomad/
@@ -110,10 +113,10 @@ gnomADSTRcalls[c("Allele1LowerBoundOTR", "Allele1HigherBoundOTR", "Allele2LowerB
 gnomADSTRcalls[c("Allele1LowerBoundOTR", "Allele1HigherBoundOTR", "Allele2LowerBoundOTR", "Allele2HigherBoundOTR")] <- lapply(gnomADSTRcalls[c("Allele1LowerBound", "Allele1HigherBoundOTR", "Allele2LowerBoundOTR", "Allele2HigherBoundOTR")], as.integer)
 
 
-table(gnomADSTRcalls$Age)
+#table(gnomADSTRcalls$Age)
 
-table(gnomADSTRcalls$AgeMin)
-table(gnomADSTRcalls$AgeMax)
+#table(gnomADSTRcalls$AgeMin)
+#table(gnomADSTRcalls$AgeMax)
 
 total <- merge(STR_table_clean,gnomADSTRcalls,by="Id")
 
@@ -161,6 +164,10 @@ for (locus in unique(gnomADSTRcalls$Id)) {
 
 table(gnomADSTRcalls$Age)
 
+wilcox.test(subset(gnomADSTRcalls, Age == 'age_not_available')$Allele2, 
+                          subset(gnomADSTRcalls, Age != 'age_not_available')$Allele2)
+
+
 # results <- data.frame()  # create an empty dataframe to store results
 # 
 # for (locus in unique(gnomADSTRcalls$Id)) {
@@ -174,7 +181,7 @@ table(gnomADSTRcalls$Age)
 # NOT ENOUGH Y DATA!!!
 ```
 
-## PCR comparision
+## PCR comparison
 ``` {r PCR, fig.width=15,fig.height=10}
 
 ggplot(gnomADSTRcalls) + 
@@ -445,9 +452,9 @@ colnames(sex_result) <- c("Id", "Sex", "Allele2>pathogenic_min", "Total_Allele2L
 
 sex_result$percent<- (sex_result$`Allele2>pathogenic_min`/sex_result$Total_Allele2Loci_for_Id)*100
 
-sum(result$Allele2_greater_than_path_max, na.rm= TRUE)
+sum(sex_result$Allele2_greater_than_path_min, na.rm= TRUE)
 
-print(result)
+print(sex_result)
 
 
 # https://cran.r-project.org/web/packages/interpretCI/vignettes/Confidence_interval_for_a_proportion.html
@@ -476,8 +483,70 @@ calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
 
 sex_result <- calculate_ci(sex_result, successes_col = "Allele2>pathogenic_min", trials_col = "Total_Allele2Loci_for_Id", conf_level = 0.95)
 
-df_with_ci$lower_ci <- df_with_ci$lower_ci*100 
-df_with_ci$upper_ci <- df_with_ci$upper_ci*100 
+sex_result$lower_ci <- sex_result$lower_ci*100 
+sex_result$upper_ci <- sex_result$upper_ci*100 
+
+
+```
+
+### Let's see about if we parse these out by PCR status
+Later, look at AD/AR
+```{r sex}
+
+total_PCR <- subset(total, total$PcrProtocol == "pcr_free" | total$PcrProtocol == "pcr_plus")
+
+table(total_PCR$PcrProtocol)
+
+Allele2_greater_than_path_min <- total_PCR$Allele2LowerBound >= total_PCR$pathogenic_min
+table(Allele2_greater_than_path_min)
+
+# Use aggregate() to count occurrences of x > y by z value
+result1 <- aggregate(cbind(Allele2_greater_than_path_min) ~ Id + PcrProtocol, data = total_PCR, FUN = sum, na.rm = TRUE)
+
+sum(result1$Allele2_greater_than_path_min)
+
+result2 <- aggregate(cbind(Allele2_greater_than_path_min) ~ Id + PcrProtocol, data = total_PCR, FUN = function(x) sum(!is.na(x)))
+
+merge(result1,result2)
+
+PCR_result <- result1 %>% inner_join( result2, 
+        by=c('Id', "PcrProtocol"))
+
+# Rename the columns of the result dataframe
+colnames(PCR_result) <- c("Id", "PcrProtocol", "Allele2>pathogenic_min", "Total_Allele2Loci_for_Id")
+
+PCR_result$percent<- (PCR_result$`Allele2>pathogenic_min`/PCR_result$Total_Allele2Loci_for_Id)*100
+
+sum(PCR_result$Allele2_greater_than_path_max, na.rm= TRUE)
+
+print(result)
+
+
+# https://cran.r-project.org/web/packages/interpretCI/vignettes/Confidence_interval_for_a_proportion.html
+# https://rcompanion.org/handbook/H_02.html
+
+
+
+
+calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
+  
+  # Calculate the estimated proportion and confidence intervals for each row
+  est_props <- df[[successes_col]] / df[[trials_col]]
+  cis <- BinomCI(df[[successes_col]], df[[trials_col]], conf.level = conf_level, method = method)
+  
+  # Extract the lower and upper confidence interval bounds
+  lower_cis <- cis[, "lwr.ci"]
+  upper_cis <- cis[, "upr.ci"]
+  
+  # Add the confidence intervals to the original data frame
+  df$lower_ci <- lower_cis
+  df$upper_ci <- upper_cis
+  
+  # Return the updated data frame
+  return(df)
+}
+
+PCR_result <- calculate_ci(PCR_result, successes_col = "Allele2>pathogenic_min", trials_col = "Total_Allele2Loci_for_Id", conf_level = 0.95)
 
 
 ```
