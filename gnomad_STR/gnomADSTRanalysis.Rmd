@@ -139,8 +139,8 @@ total <- merge(STR_table_clean,gnomADSTRcalls,by="Id")
 # table(gnomADSTRcalls_noallele2$Allele1)
 
 gnomADSTRcalls$AlleleLargest <- pmax(gnomADSTRcalls$Allele1, gnomADSTRcalls$Allele2, na.rm = TRUE)
-table(gnomADSTRcalls$AlleleLargest)
-table(gnomADSTRcalls$AlleleLargest >= gnomADSTRcalls$Allele1, useNA = "ifany")
+#table(gnomADSTRcalls$AlleleLargest)
+#table(gnomADSTRcalls$AlleleLargest >= gnomADSTRcalls$Allele1, useNA = "ifany")
 
 ```
 
@@ -339,6 +339,9 @@ ggplot(total) + geom_point(aes(x = Id, y = Allele2UsingOfftargetRegions, col=typ
 ggplot(total) + geom_point(aes(x = Id, y = Allele2, col=type)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) + facet_grid(~type, scales = "free_x") + ylim(0,400) + scale_x_discrete(guide = guide_axis(check.overlap = TRUE))
 
 ```
+
+
+
 ``` {r type}
 ggplot(total) + geom_point(aes(x = Id, y = AlleleLargest, col=type)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) + facet_grid(~type, scales = "free_x") + ylim(0,400) + scale_x_discrete(guide = guide_axis(check.overlap = TRUE))
 
@@ -411,9 +414,33 @@ result$percent<- (result$`Allele2>pathogenic_min`/result$Total_Allele2Loci_for_I
 
 
 
-sum(result$Allele2_greater_than_path_max, na.rm= TRUE)
+calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
+  
+  # Calculate the estimated proportion and confidence intervals for each row
+  est_props <- df[[successes_col]] / df[[trials_col]]
+  cis <- BinomCI(df[[successes_col]], df[[trials_col]], conf.level = conf_level, method = method)
+  
+  # Extract the lower and upper confidence interval bounds
+  lower_cis <- cis[, "lwr.ci"]
+  upper_cis <- cis[, "upr.ci"]
+  
+  # Add the confidence intervals to the original data frame
+  df$lower_ci <- lower_cis*100
+  df$upper_ci <- upper_cis*100
+  
+  # Return the updated data frame
+  return(df)
+}
 
-print(result)
+result <- calculate_ci(result, successes_col = "Allele2>pathogenic_min", trials_col = "Total_Allele2Loci_for_Id", conf_level = 0.95)
+
+ggplot(result, aes(x = reorder(Id,percent), y = percent, color = Id)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  xlab("Id") +  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8), legend.position = "none") +
+  ylab("Pathogenic Percentage") +
+  ggtitle("Pathogenic Percentage by Id with 95% CI")
+
 #ggplot(total) +
  # geom_histogram(aes(x = Allele2, fill = Id), alpha = 0.5) + facet_wrap(~Allele2 > pathogenic_max, scales = 'free_y') + theme(legend.position = "none")
 
@@ -460,9 +487,6 @@ print(sex_result)
 # https://cran.r-project.org/web/packages/interpretCI/vignettes/Confidence_interval_for_a_proportion.html
 # https://rcompanion.org/handbook/H_02.html
 
-
-library(DescTools)
-
 calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
   
   # Calculate the estimated proportion and confidence intervals for each row
@@ -474,8 +498,8 @@ calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
   upper_cis <- cis[, "upr.ci"]
   
   # Add the confidence intervals to the original data frame
-  df$lower_ci <- lower_cis
-  df$upper_ci <- upper_cis
+  df$lower_ci <- lower_cis*100
+  df$upper_ci <- upper_cis*100
   
   # Return the updated data frame
   return(df)
@@ -483,15 +507,78 @@ calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
 
 sex_result <- calculate_ci(sex_result, successes_col = "Allele2>pathogenic_min", trials_col = "Total_Allele2Loci_for_Id", conf_level = 0.95)
 
-sex_result$lower_ci <- sex_result$lower_ci*100 
-sex_result$upper_ci <- sex_result$upper_ci*100 
+ggplot(sex_result, aes(x = reorder(Id,percent), y = percent, color = Sex)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  xlab("Id") +  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) +
+  ylab("Pathogenic Percentage") +
+  ggtitle("Pathogenic Percentage by Id with 95% CI with Sex Info")
 
 
 ```
 
+
+### Inheritance patterns?
+```{r inheritance}
+
+Allele2_greater_than_path_min <- total$Allele2LowerBound >= total$pathogenic_min
+table(Allele2_greater_than_path_min)
+
+# Use aggregate() to count occurrences of x > y by z value
+result1 <- aggregate(cbind(Allele2_greater_than_path_min) ~ Id + Inheritance, data = total, FUN = sum, na.rm = TRUE)
+
+sum(result1$Allele2_greater_than_path_min)
+
+result2 <- aggregate(cbind(Allele2_greater_than_path_min) ~ Id + Inheritance, data = total, FUN = function(x) sum(!is.na(x)))
+
+merge(result1,result2)
+
+inheritance_result <- result1 %>% inner_join( result2, 
+        by=c('Id', "Inheritance"))
+
+# Rename the columns of the result dataframe
+colnames(inheritance_result) <- c("Id", "Inheritance", "Allele2>pathogenic_min", "Total_Allele2Loci_for_Id")
+
+inheritance_result$percent<- (inheritance_result$`Allele2>pathogenic_min`/inheritance_result$Total_Allele2Loci_for_Id)*100
+
+sum(inheritance_result$Allele2_greater_than_path_min, na.rm= TRUE)
+
+print(sex_result)
+
+# https://cran.r-project.org/web/packages/interpretCI/vignettes/Confidence_interval_for_a_proportion.html
+# https://rcompanion.org/handbook/H_02.html
+
+# calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
+#   
+#   # Calculate the estimated proportion and confidence intervals for each row
+#   est_props <- df[[successes_col]] / df[[trials_col]]
+#   cis <- BinomCI(df[[successes_col]], df[[trials_col]], conf.level = conf_level, method = method)
+#   
+#   # Extract the lower and upper confidence interval bounds
+#   lower_cis <- cis[, "lwr.ci"]
+#   upper_cis <- cis[, "upr.ci"]
+#   
+#   # Add the confidence intervals to the original data frame
+#   df$lower_ci <- lower_cis*100
+#   df$upper_ci <- upper_cis*100
+#   
+#   # Return the updated data frame
+#   return(df)
+# }
+
+inheritance_result <- calculate_ci(inheritance_result, successes_col = "Allele2>pathogenic_min", trials_col = "Total_Allele2Loci_for_Id", conf_level = 0.95)
+
+ggplot(inheritance_result, aes(x = reorder(Id,percent), y = percent, color = Inheritance)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  xlab("Id") +  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) +
+  ylab("Pathogenic Percentage") +
+  ggtitle("Pathogenic Percentage by Id with 95% CI with Inheritance Info")
+
+
+```
 ### Let's see about if we parse these out by PCR status
-Later, look at AD/AR
-```{r sex}
+```{r PCRT}
 
 total_PCR <- subset(total, total$PcrProtocol == "pcr_free" | total$PcrProtocol == "pcr_plus")
 
@@ -502,8 +589,6 @@ table(Allele2_greater_than_path_min)
 
 # Use aggregate() to count occurrences of x > y by z value
 result1 <- aggregate(cbind(Allele2_greater_than_path_min) ~ Id + PcrProtocol, data = total_PCR, FUN = sum, na.rm = TRUE)
-
-sum(result1$Allele2_greater_than_path_min)
 
 result2 <- aggregate(cbind(Allele2_greater_than_path_min) ~ Id + PcrProtocol, data = total_PCR, FUN = function(x) sum(!is.na(x)))
 
@@ -525,26 +610,24 @@ print(result)
 # https://cran.r-project.org/web/packages/interpretCI/vignettes/Confidence_interval_for_a_proportion.html
 # https://rcompanion.org/handbook/H_02.html
 
-
-
-
-calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
-  
-  # Calculate the estimated proportion and confidence intervals for each row
-  est_props <- df[[successes_col]] / df[[trials_col]]
-  cis <- BinomCI(df[[successes_col]], df[[trials_col]], conf.level = conf_level, method = method)
-  
-  # Extract the lower and upper confidence interval bounds
-  lower_cis <- cis[, "lwr.ci"]
-  upper_cis <- cis[, "upr.ci"]
-  
-  # Add the confidence intervals to the original data frame
-  df$lower_ci <- lower_cis
-  df$upper_ci <- upper_cis
-  
-  # Return the updated data frame
-  return(df)
-}
+# 
+# calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
+#   
+#   # Calculate the estimated proportion and confidence intervals for each row
+#   est_props <- df[[successes_col]] / df[[trials_col]]
+#   cis <- BinomCI(df[[successes_col]], df[[trials_col]], conf.level = conf_level, method = method)
+#   
+#   # Extract the lower and upper confidence interval bounds
+#   lower_cis <- cis[, "lwr.ci"]
+#   upper_cis <- cis[, "upr.ci"]
+#   
+#   # Add the confidence intervals to the original data frame
+#   df$lower_ci <- lower_cis*100
+#   df$upper_ci <- upper_cis*100
+#   
+#   # Return the updated data frame
+#   return(df)
+# }
 
 PCR_result <- calculate_ci(PCR_result, successes_col = "Allele2>pathogenic_min", trials_col = "Total_Allele2Loci_for_Id", conf_level = 0.95)
 
@@ -560,27 +643,29 @@ Could also do pathogenic age min - # to increase wiggle
 Number for each locus: how many individuals, and what sizes are the allele
 Off target would be nice… because gnomad uses conservative estimates
 
-```{r Q2}
+```{r Q2 disease id}
 
-total_subset <- total[complete.cases(total$AgeMax), ]
+total_subset <- total[complete.cases(total$AgeMin), ]
 
-# Apply the condition to each row of the data frame
-condition <- (total_subset$Allele2 >= total_subset$pathogenic_min) & (total_subset$AgeMin > total_subset$age_onset_max)
+total_subset$AgeMin <- as.integer(total_subset$AgeMin)
 
-# Use ifelse to print a message for each row where the condition is true
-result <- ifelse(condition, 
-                 paste("Allele2:", total_subset$Allele2, ", pathogenic_max:", total_subset$pathogenic_max),
-                 "not")
-
-# Print the result
-cat(result, sep = "\n")
-
-# just checking the number is right
-n_not_missing_age <- table(total$Age != "age_not_available")[2]
+# # Apply the condition to each row of the data frame
+# condition <- (total_subset$AlleleLargest >= total_subset$pathogenic_min) & (total_subset$AgeMin > total_subset$age_onset_max)
+# 
+# # Use ifelse to print a message for each row where the condition is true
+# result <- ifelse(condition, 
+#                  paste("Allele2:", total_subset$Allele2, ", pathogenic_max:", total_subset$pathogenic_max),
+#                  "not")
+# 
+# # Print the result
+# cat(result, sep = "\n")
+# 
+# # just checking the number is right
+# n_not_missing_age <- table(total$Age != "age_not_available")[2]
 
 # Create a logical vector to represent whether x > y for each row
 
-Allele2_greater_than_path_max_with_age <- (total_subset$Allele2 > total_subset$pathogenic_max) & (total_subset$AgeMax > total_subset$age_onset_max)
+Allele2_greater_than_path_max_with_age <- (total_subset$AlleleLargest >= total_subset$pathogenic_max) & (total_subset$AgeMin >= total_subset$age_onset_max)
 
 table(Allele2_greater_than_path_max_with_age)
 
@@ -588,17 +673,15 @@ result1 <- aggregate(cbind(as.numeric(Allele2_greater_than_path_max_with_age)), 
 
 sum(result1$V1, na.rm= TRUE)
 
+result2 <- aggregate(cbind(total_subset$disease_id), by = list(total_subset$disease_id), FUN = function(x) sum(!is.na(x)))
 
-result2 <- aggregate(cbind(total_subset$disease_id), by = list(total_subset$disease_id), FUN = length)
+colnames(result1) <- c("disease_id", "Allele2>pathogenic_max&agemax>age_onset_max")
+colnames(result2) <- c("disease_id", "Allele2_Loci_by_Disease_Id")
+
 
 result <- merge(result1,result2)
 
-#sum(result$V1)
-# check to make sure stuff is working
-
-# Rename columns and calculate proportions
-colnames(result) <- c("disease_id", "Count Allele2 > pathogenic_max and agemax > age_onset_max", "Allele2 Loci by Disease Id")
-result$proportion <- (result$`Count Allele2 > pathogenic_max and agemax > age_onset_max` / result$`Allele2 Loci by Disease Id`)
+result$percent <- result$`Allele2>pathogenic_max&agemax>age_onset_max`/result$Allele2_Loci_by_Disease_Id*100
 
 # Print result
 print(result)
@@ -616,7 +699,69 @@ print(bigresult)
 
 ```
 
+```{r Q2 id}
 
+total_subset <- total[complete.cases(total$AgeMin), ]
+
+total_subset$AgeMin <- as.integer(total_subset$AgeMin)
+
+# # Apply the condition to each row of the data frame
+# condition <- (total_subset$AlleleLargest >= total_subset$pathogenic_min) & (total_subset$AgeMin > total_subset$age_onset_max)
+# 
+# # Use ifelse to print a message for each row where the condition is true
+# result <- ifelse(condition, 
+#                  paste("Allele2:", total_subset$Allele2, ", pathogenic_max:", total_subset$pathogenic_max),
+#                  "not")
+# 
+# # Print the result
+# cat(result, sep = "\n")
+# 
+# # just checking the number is right
+# n_not_missing_age <- table(total$Age != "age_not_available")[2]
+
+# Create a logical vector to represent whether x > y for each row
+
+Allele2_greater_than_path_max_with_age <- (total_subset$AlleleLargest >= total_subset$pathogenic_max) & (total_subset$AgeMin >= total_subset$age_onset_max)
+
+table(Allele2_greater_than_path_max_with_age)
+
+result1 <- aggregate(cbind(as.numeric(Allele2_greater_than_path_max_with_age)), by = list(total_subset$Id), FUN = sum)
+
+sum(result1$V1, na.rm= TRUE)
+
+result2 <- aggregate(cbind(total_subset$disease_id), by = list(total_subset$Id), FUN = function(x) sum(!is.na(x)))
+
+colnames(result1) <- c("Id", "Allele2>pathogenic_max&agemax>age_onset_max")
+colnames(result2) <- c("Id", "Allele2_Loci_by_Id")
+
+
+result <- merge(result1,result2)
+
+result$percent <- result$`Allele2>pathogenic_max&agemax>age_onset_max`/result$Allele2_Loci_by_Id*100
+
+result <- calculate_ci(result, successes_col = "Allele2>pathogenic_max&agemax>age_onset_max", trials_col = "Allele2_Loci_by_Id", conf_level = 0.95)
+
+ggplot(result, aes(x = reorder(Id,percent), y = percent, color = Id)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  xlab("Id") +  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8), legend.position = "none") +
+  ylab("Pathogenic Percentage") + 
+  ggtitle("Pathogenic Percentage Over Age by Id with 95% CI ")
+
+# 
+# 
+# # Summarize additional statistics by disease_id
+# result2 <- total_subset %>%
+#   group_by(disease_id) %>%
+#   summarise(min_allele2 = min(as.numeric(Allele2)), max_allele2 = max(as.numeric(Allele2)), max_pathogenic_max = max(as.numeric(pathogenic_max)))
+# 
+# # Merge results
+# bigresult <- merge(result, result2)
+# 
+# # Print bigresult
+# print(bigresult)
+
+```
 ## Detour with Confidence Regions
 "First, split it into two columns so we can plot it. I can think of a few plots that might be useful. Probably to start with, does the width of the confidence interval increase with allele2 size?"
 
