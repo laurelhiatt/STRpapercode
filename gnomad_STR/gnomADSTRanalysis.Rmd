@@ -631,6 +631,7 @@ print(result)
 
 PCR_result <- calculate_ci(PCR_result, successes_col = "Allele2>pathogenic_min", trials_col = "Total_Allele2Loci_for_Id", conf_level = 0.95)
 
+#### PLOT WITH PERCENTAGE DATA!!!!!
 
 ```
 
@@ -721,7 +722,7 @@ total_subset$AgeMin <- as.integer(total_subset$AgeMin)
 
 # Create a logical vector to represent whether x > y for each row
 
-Allele2_greater_than_path_max_with_age <- (total_subset$AlleleLargest >= total_subset$pathogenic_max) & (total_subset$AgeMin >= total_subset$age_onset_max)
+Allele2_greater_than_path_max_with_age <- (total_subset$Allele2LowerBound >= total_subset$pathogenic_max) & (total_subset$AgeMin >= total_subset$age_onset_max)
 
 table(Allele2_greater_than_path_max_with_age)
 
