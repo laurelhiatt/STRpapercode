@@ -56,6 +56,8 @@ STR_table$gene[STR_table$gene == "MARCH6"] <- "MARCHF6"
 STR_table$gene[STR_table$gene == "C9orf72"] <- "C9ORF72"
 STR_table$gene[STR_table$gene == "ATXN8OS/ATXN8"] <- "ATXN8OS"
 STR_table$gene[STR_table$gene == "NUTM2B-AS1/NUTM2B-AS1"] <- "NUTM2B-AS1"
+STR_table$gene[STR_table$gene == "ZNF9 / CNBP1"] <- "CNBP"
+
 STR_table$gene[STR_table$gene == "ARX" & STR_table$stop_hg38 == 25013697] <- "ARX_1"
 STR_table$gene[STR_table$gene == "ARX" & STR_table$stop_hg38 == 25013565] <- "ARX_2"
 STR_table$gene[STR_table$gene == "HOXA13" & STR_table$stop_hg38 == 27199966] <- "HOXA13_1"
