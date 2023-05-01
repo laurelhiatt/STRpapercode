@@ -14,6 +14,7 @@ library('cowplot')
 library("tidyverse")
 library("broom")
 library(DescTools)
+library(Biostrings)
 theme_set(theme_cowplot())
 options(stringsAsFactors = FALSE)
 ```
@@ -26,18 +27,15 @@ options(stringsAsFactors = FALSE)
 
 
 ### To do
-- use allele2lowerbound instead of allele2... woo!
 - if recessive, are both alleles >?
-- other stuff ####
-- NMDS 
-- CI everywhere
+
 #### Look at AD, AR
 
 https://gnomad.broadinstitute.org/news/2022-01-the-addition-of-short-tandem-repeat-calls-to-gnomad/
 ```{r import}
 gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t', stringsAsFactors = FALSE)
 
-STR_table <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/STR_table_04072023.csv', stringsAsFactors = FALSE)
+STR_table <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/STR_table_05012023.csv', stringsAsFactors = FALSE)
 
 #str(STR_table)
 
@@ -64,6 +62,10 @@ STR_table$gene[STR_table$gene == "HOXA13" & STR_table$stop_hg38 == 27199966] <- 
 STR_table$gene[STR_table$gene == "HOXA13" & STR_table$stop_hg38 == 27199861] <- "HOXA13_2"
 STR_table$gene[STR_table$gene == "HOXA13" & STR_table$stop_hg38 == 27199732] <- "HOXA13_3"
 
+
+STR_table$repeatunit_ref[STR_table$repeatunit_ref == "GGC/CGC"] <- "NGC"
+
+
 ```
 
 ## This is just to check and see what doesn't match
@@ -84,9 +86,47 @@ length(tablegenelist[(tablegenelist %in% genelist)])
 # CCG in HTT is non-pathogenic but also sometimes surveyed; there might be some association with disease as founder effect?
 ```
 
+## Let's figure out the motif stuff
+``` {r motif}
+# MotifStuff
+gnomADSTRcalls[c("Allele1Motif", "Allele2Motif")] <- as.data.frame(do.call(rbind, strsplit(gnomADSTRcalls$Motif, "/")), stringsAsFactors = FALSE)
+#####Make MotifLargest
+
+gnomADSTRcalls$MotifLargest <- ifelse(is.na(gnomADSTRcalls$Allele2) | gnomADSTRcalls$Allele1 > gnomADSTRcalls$Allele2, 
+                                      gnomADSTRcalls$Allele1Motif, 
+                                      gnomADSTRcalls$Allele2Motif)
+
+
+# Only the AATAG is in the BEAN1 loci so... let's do that
+#subset(gnomADSTRcalls, gnomADSTRcalls$Id == "BEAN1" & gnomADSTRcalls$motif_norm == "AATGG")
+#subset(gnomADSTRcalls, gnomADSTRcalls$Id == "BEAN1" & gnomADSTRcalls$motif_norm == "AATAG")
+
+
+normalise_str <- function(in_dna) {
+  if (is.null(in_dna) || length(in_dna) == 0) {
+    return('')
+  }
+  # Generate all circular permutations of input sequence
+  all_possible <- sapply(0:(nchar(in_dna)-1), function(i) paste0(substr(in_dna, i+1, nchar(in_dna)), substr(in_dna, 1, i)))
+  # Sort permutations alphabetically and return the first
+  return(sort(all_possible)[1])
+}
+
+# normalise_str("TAAA")
+
+
+# toy <- gnomADSTRcalls[sample(nrow(gnomADSTRcalls), 20), ]
+# 
+# toy$motif_norm <- sapply(toy$MotifLargest, function(x) normalise_str(as.character(x)))
+
+
+gnomADSTRcalls$motif_norm <- sapply(gnomADSTRcalls$MotifLargest, function(x) normalise_str(as.character(x)))
+```
+
 ## Let's merge some data
 ### We are also going to make some new age columns
 ### And then we're separating out the genotype confidence intervals
+
 ```{r merge}
 STR_table_clean <-subset(STR_table, select=c("disease_id", "gene",
                                              "repeatunit_ref", "Inheritance",
@@ -94,13 +134,22 @@ STR_table_clean <-subset(STR_table, select=c("disease_id", "gene",
                                              "intermediate_min", "intermediate_max",
                                              "pathogenic_min", "pathogenic_max",
                                              "repeat_unit_lenth", "age_onset_min",
-                                             "age_onset_max", "novel", "repeatunit_path_norm"))
+                                             "age_onset_max", "novel", "repeatunit_path_plusstrand"))
 
-STR_table_clean <- STR_table_clean %>%
-  rename("Id" = "gene")
+colnames(STR_table_clean)[2] = "Id"
+
+#match what's in data
+STR_table_clean$repeatunit_path_plusstrand[STR_table_clean$repeatunit_path_plusstrand == "TGGAA/TAGAA"] <- "TAGAA"
 
 
-gnomADSTRcalls$Age[gnomADSTRcalls$Age == '<20'] <- "00-19"
+STR_table_clean$repeatunit_path_normalized <- sapply(STR_table_clean$repeatunit_path_plusstrand, function(x) normalise_str(as.character(x)))
+
+
+STR_table_clean$repeatunit_ref_normalized <- sapply(STR_table_clean$repeatunit_ref, function(x) normalise_str(as.character(x)))
+
+
+
+gnomADSTRcalls$Age[gnomADSTRcalls$Age == '<20'] <- "03-19"
 gnomADSTRcalls$Age[gnomADSTRcalls$Age == '>80'] <- "81-99"
 
 gnomADSTRcalls$AgeMax = as.numeric(str_sub(gnomADSTRcalls$Age,-2,-1)) # get last two char in Age. Assumes all <100
@@ -123,6 +172,28 @@ gnomADSTRcalls[c("Allele1LowerBoundOTR", "Allele1HigherBoundOTR", "Allele2LowerB
 total <- merge(STR_table_clean,gnomADSTRcalls,by="Id")
 
 ```
+
+``` {r comparing_norm_motifs}
+
+### regex ? 
+table(total$repeatunit_path_normalized == total$motif_norm)
+table(total$repeatunit_path_normalized == total$motif_norm | total$repeatunit_ref_normalized == total$motif_norm)
+
+
+subset(total, repeatunit_path_normalized != motif_norm & repeatunit_ref_normalized != motif_norm,
+       select = c("motif_norm", "repeatunit_ref_normalized", "repeatunit_path_normalized", "Id"))
+
+unique(subset(total, repeatunit_path_normalized != motif_norm & repeatunit_ref_normalized != motif_norm,
+       select = c("motif_norm", "repeatunit_ref_normalized", "repeatunit_path_normalized", "Id")))
+
+mismatchmotif <- total %>%
+  subset(repeatunit_path_normalized != motif_norm & repeatunit_ref_normalized != motif_norm,
+         select = c("motif_norm", "repeatunit_ref_normalized", "repeatunit_path_normalized", "Id")) %>%
+  count(Id, motif_norm, repeatunit_ref_normalized, repeatunit_path_normalized)
+
+subset(total, total$motif_norm == "ATGTT" & total$Id == "YEATS2")
+```
+
 
 ## Let's get a subset of the merged data (optional)
 ``` {r subset}
@@ -257,12 +328,12 @@ ggplot(gnomADSTRcalls) + geom_point(aes(x = Allele1UsingOfftargetRegions, y = Al
 ```
 
 
-``` {r allele2check by loci, fig.width=15,fig.height=100}
+``` {r allele2check by loci, fig.width=15,fig.height=300}
 
 ggplot(gnomADSTRcalls) + geom_point(aes(x = Allele2, y = Allele2UsingOfftargetRegions, col=Motif)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position = "none") + facet_wrap(~Id, ncol=2, scales = "free") 
 
 
-ggplot(gnomADSTRcalls) + geom_point(aes(x = AlleleLargest, y = Allele2UsingOfftargetRegions, col=Motif)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position = "none") + facet_wrap(~Id, ncol=2, scales = "free") 
+ggplot(gnomADSTRcalls) + geom_point(aes(x = AlleleLargest, y = Allele2UsingOfftargetRegions, col=Motif)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position = "none") + facet_wrap(Id~motif_norm, ncol=2, scales = "free") + geom_abline(slope=1,intercept=0, col="gray")
 ```
 
 ``` {r allele1check by loci, fig.width=15,fig.height=100}
@@ -785,10 +856,47 @@ ggplot(gnomADSTRcalls, aes(x = Allele2, y = (Allele2HigherBound - Allele2LowerBo
 
 ```{r confinterveal spread out}
 ggplot(gnomADSTRcalls, aes(x = gnomADSTRcalls$Allele2, y = (gnomADSTRcalls$Allele2HigherBound - gnomADSTRcalls$Allele2LowerBound), col=Id)) +
-  geom_point() + theme(legend.position = "none") + facet_grid(~disease)
+  geom_point() + theme(legend.position = "none") + facet_grid(~Id) + 
   labs(y = "Width of Allele2 Confidence Interval", x = "Allele2")
 ```
+
+
+
+
 ## Including Plots
+# Do this after motifs have been separated. Then use one of the motifs sizes as the nchar bit. May need to finess RFC1 because it can have different motif sizes
+
+gnomADSTRcalls$RefAllele = round((gnomADSTRcalls$End - gnomADSTRcalls$Start_0based)/nchar(gnomADSTRcalls$Motif))
+
+ggplot(gnomADSTRcalls, 
+       aes(x = Allele1,
+           fill = Allele1 == RefAllele)
+) + 
+  geom_bar() + facet_wrap(~Id, ncol=3, scales = "free")
+ggsave('Allele1_isref.pdf', height = 50, width = 20, limitsize = FALSE)
+
+ggplot(subset(gnomADSTRcalls, !is.na(Allele2)), 
+       aes(x = Allele2,
+           fill = Allele2 == RefAllele)
+) + 
+  geom_bar() + facet_wrap(~Id, ncol=3, scales = "free")
+ggsave('Allele2_isref.pdf', height = 50, width = 20, limitsize = FALSE)
+
+ggplot(gnomADSTRcalls, 
+       aes(x = Allele1UsingOfftargetRegions,
+           fill = Allele1UsingOfftargetRegions == RefAllele)
+       ) + 
+  geom_bar() + facet_wrap(~Id, ncol=3, scales = "free")
+ggsave('Allele1OTR_isref.pdf', height = 50, width = 20, limitsize = FALSE)
+
+ggplot(subset(gnomADSTRcalls, !is.na(Allele2UsingOfftargetRegions)), 
+       aes(x = Allele2UsingOfftargetRegions,
+           fill = Allele2UsingOfftargetRegions == RefAllele)
+) + 
+  geom_bar() + facet_wrap(~Id, ncol=3, scales = "free")
+ggsave('Allele2OTR_isref.pdf', height = 50, width = 20, limitsize = FALSE)
+
+# Fill by motif first, then separate by motif if needed. (edited) 
 
 You can also embed plots, for example:
 
