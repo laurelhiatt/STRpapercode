@@ -168,6 +168,8 @@ gnomADSTRcalls[c("Allele1LowerBoundOTR", "Allele1HigherBoundOTR", "Allele2LowerB
 
 #table(gnomADSTRcalls$AgeMin)
 #table(gnomADSTRcalls$AgeMax)
+gnomADSTRcalls$AlleleLargest <- pmax(gnomADSTRcalls$Allele1, gnomADSTRcalls$Allele2, na.rm = TRUE)
+
 
 total <- merge(STR_table_clean,gnomADSTRcalls,by="Id")
 
@@ -192,6 +194,8 @@ mismatchmotif <- total %>%
   count(Id, motif_norm, repeatunit_ref_normalized, repeatunit_path_normalized)
 
 subset(total, total$motif_norm == "ATGTT" & total$Id == "YEATS2")
+
+ggplot 
 ```
 
 
@@ -211,7 +215,6 @@ subset(total, total$motif_norm == "ATGTT" & total$Id == "YEATS2")
 # gnomADSTRcalls_noallele2 <- gnomADSTRcalls[is.na(gnomADSTRcalls$Allele2),]
 # table(gnomADSTRcalls_noallele2$Allele1)
 
-gnomADSTRcalls$AlleleLargest <- pmax(gnomADSTRcalls$Allele1, gnomADSTRcalls$Allele2, na.rm = TRUE)
 #table(gnomADSTRcalls$AlleleLargest)
 #table(gnomADSTRcalls$AlleleLargest >= gnomADSTRcalls$Allele1, useNA = "ifany")
 
@@ -521,6 +524,52 @@ ggplot(result, aes(x = reorder(Id,percent), y = percent, color = Id)) +
 #table(total_pabpn1$Allele2)
 ```
 
+
+```{r Q1 with motif}
+Allele2_greater_than_path_min_with_motif <- (total$Allele2LowerBound >= total$pathogenic_min) & (total$motif_norm == total$repeatunit_path_normalized)
+
+table(Allele2_greater_than_path_min_with_motif)
+
+result1 <- aggregate(cbind(as.numeric(Allele2_greater_than_path_min_with_motif)), by = list(total$Id), FUN = sum)
+
+sum(result1$V1, na.rm= TRUE)
+
+result2 <- aggregate(cbind(total$disease_id), by = list(total$Id, total$repeatunit_path_normalized), FUN = function(x) sum(!is.na(x)))
+
+
+colnames(result1) <- c("Id", "Allele2>pathogenic_min&&motif_norm=motif_path")
+colnames(result2) <- c("Id", "pathogenic_motif", "Allele2_Loci_by_Id")
+
+
+result <- merge(result1,result2)
+
+result$percent <- result$`Allele2>pathogenic_min&&motif_norm=motif_path``/result$Allele2_Loci_by_Id*100
+
+result <- calculate_ci(result, successes_col = "Allele2>pathogenic_max&agemax>age_onset_max&motif_norm=motif_path", trials_col = "Allele2_Loci_by_Id", conf_level = 0.95)
+
+ggplot(result, aes(x = reorder(Id,percent), y = percent, color = pathogenic_motif)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  xlab("Id") +  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) +
+  ylab("Pathogenic Percentage") + 
+  ggtitle("Pathogenic Percentage Over Age by Id AND Motif with 95% CI ")
+
+
+ggplot(subset(result, percent > 5), aes(x = reorder(Id, percent), y = percent, color = pathogenic_motif)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  xlab("Id") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) +
+  ylab("Pathogenic Percentage") + ggtitle("Pathogenic Percentage Over Age by Id AND Motif with 95% CI (Percent > 5)")
+
+ggplot(subset(result, percent <= 5), aes(x = reorder(Id, percent), y = percent, color = pathogenic_motif)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  xlab("Id") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) +
+  ylab("Pathogenic Percentage") + ggtitle("Pathogenic Percentage Over Age by Id AND Motif with 95% CI (Percent <= 5)")
+
+  
+  
+```
 Do i want to see how many alleles are within normal range? vs intermediate
 
 
@@ -650,6 +699,7 @@ ggplot(inheritance_result, aes(x = reorder(Id,percent), y = percent, color = Inh
 
 
 ```
+
 ### Let's see about if we parse these out by PCR status
 ```{r PCRT}
 
@@ -677,34 +727,54 @@ PCR_result$percent<- (PCR_result$`Allele2>pathogenic_min`/PCR_result$Total_Allel
 
 sum(PCR_result$Allele2_greater_than_path_max, na.rm= TRUE)
 
-print(result)
-
 
 # https://cran.r-project.org/web/packages/interpretCI/vignettes/Confidence_interval_for_a_proportion.html
 # https://rcompanion.org/handbook/H_02.html
 
-# 
-# calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
-#   
-#   # Calculate the estimated proportion and confidence intervals for each row
-#   est_props <- df[[successes_col]] / df[[trials_col]]
-#   cis <- BinomCI(df[[successes_col]], df[[trials_col]], conf.level = conf_level, method = method)
-#   
-#   # Extract the lower and upper confidence interval bounds
-#   lower_cis <- cis[, "lwr.ci"]
-#   upper_cis <- cis[, "upr.ci"]
-#   
-#   # Add the confidence intervals to the original data frame
-#   df$lower_ci <- lower_cis*100
-#   df$upper_ci <- upper_cis*100
-#   
-#   # Return the updated data frame
-#   return(df)
-# }
+
+calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
+
+  # Calculate the estimated proportion and confidence intervals for each row
+  est_props <- df[[successes_col]] / df[[trials_col]]
+  cis <- BinomCI(df[[successes_col]], df[[trials_col]], conf.level = conf_level, method = method)
+
+  # Extract the lower and upper confidence interval bounds
+  lower_cis <- cis[, "lwr.ci"]
+  upper_cis <- cis[, "upr.ci"]
+
+  # Add the confidence intervals to the original data frame
+  df$lower_ci <- lower_cis*100
+  df$upper_ci <- upper_cis*100
+
+  # Return the updated data frame
+  return(df)
+}
 
 PCR_result <- calculate_ci(PCR_result, successes_col = "Allele2>pathogenic_min", trials_col = "Total_Allele2Loci_for_Id", conf_level = 0.95)
 
 #### PLOT WITH PERCENTAGE DATA!!!!!
+
+ggplot(PCR_result, aes(x = reorder(Id,percent), y = percent, color = PcrProtocol)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  xlab("Id") +  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) +
+  ylab("Pathogenic Percentage") +
+  ggtitle("Pathogenic Percentage by Id with 95% CI with Protocol Info")
+
+
+t.test(PCR_result$`Allele2>pathogenic_min` ~ PcrProtocol, data = PCR_result)
+
+
+# Welch Two Sample t-test
+# 
+# data:  PCR_result$`Allele2>pathogenic_min` by PcrProtocol
+# t = 1.7474, df = 60.672, p-value = 0.08563
+# alternative hypothesis: true difference in means between group pcr_free and group pcr_plus is not equal to 0
+# 95 percent confidence interval:
+#  -15.05869 223.53142
+# sample estimates:
+# mean in group pcr_free mean in group pcr_plus 
+#              146.78182               42.54545 
 
 ```
 
@@ -720,9 +790,7 @@ Off target would be nice… because gnomad uses conservative estimates
 ```{r Q2 disease id}
 
 total_subset <- total[complete.cases(total$AgeMin), ]
-
 total_subset$AgeMin <- as.integer(total_subset$AgeMin)
-
 # # Apply the condition to each row of the data frame
 # condition <- (total_subset$AlleleLargest >= total_subset$pathogenic_min) & (total_subset$AgeMin > total_subset$age_onset_max)
 # 
@@ -736,38 +804,24 @@ total_subset$AgeMin <- as.integer(total_subset$AgeMin)
 # 
 # # just checking the number is right
 # n_not_missing_age <- table(total$Age != "age_not_available")[2]
-
 # Create a logical vector to represent whether x > y for each row
-
 Allele2_greater_than_path_max_with_age <- (total_subset$AlleleLargest >= total_subset$pathogenic_max) & (total_subset$AgeMin >= total_subset$age_onset_max)
-
 table(Allele2_greater_than_path_max_with_age)
-
 result1 <- aggregate(cbind(as.numeric(Allele2_greater_than_path_max_with_age)), by = list(total_subset$disease_id), FUN = sum)
-
 sum(result1$V1, na.rm= TRUE)
-
 result2 <- aggregate(cbind(total_subset$disease_id), by = list(total_subset$disease_id), FUN = function(x) sum(!is.na(x)))
-
 colnames(result1) <- c("disease_id", "Allele2>pathogenic_max&agemax>age_onset_max")
 colnames(result2) <- c("disease_id", "Allele2_Loci_by_Disease_Id")
-
-
 result <- merge(result1,result2)
-
 result$percent <- result$`Allele2>pathogenic_max&agemax>age_onset_max`/result$Allele2_Loci_by_Disease_Id*100
-
 # Print result
 print(result)
-
 # Summarize additional statistics by disease_id
 result2 <- total_subset %>%
   group_by(disease_id) %>%
   summarise(min_allele2 = min(as.numeric(Allele2)), max_allele2 = max(as.numeric(Allele2)), max_pathogenic_max = max(as.numeric(pathogenic_max)))
-
 # Merge results
 bigresult <- merge(result, result2)
-
 # Print bigresult
 print(bigresult)
 
@@ -776,9 +830,7 @@ print(bigresult)
 ```{r Q2 id}
 
 total_subset <- total[complete.cases(total$AgeMin), ]
-
 total_subset$AgeMin <- as.integer(total_subset$AgeMin)
-
 # # Apply the condition to each row of the data frame
 # condition <- (total_subset$AlleleLargest >= total_subset$pathogenic_min) & (total_subset$AgeMin > total_subset$age_onset_max)
 # 
@@ -792,35 +844,24 @@ total_subset$AgeMin <- as.integer(total_subset$AgeMin)
 # 
 # # just checking the number is right
 # n_not_missing_age <- table(total$Age != "age_not_available")[2]
-
 # Create a logical vector to represent whether x > y for each row
-
 Allele2_greater_than_path_max_with_age <- (total_subset$Allele2LowerBound >= total_subset$pathogenic_max) & (total_subset$AgeMin >= total_subset$age_onset_max)
-
 table(Allele2_greater_than_path_max_with_age)
-
 result1 <- aggregate(cbind(as.numeric(Allele2_greater_than_path_max_with_age)), by = list(total_subset$Id), FUN = sum)
-
 sum(result1$V1, na.rm= TRUE)
-
 result2 <- aggregate(cbind(total_subset$disease_id), by = list(total_subset$Id), FUN = function(x) sum(!is.na(x)))
-
 colnames(result1) <- c("Id", "Allele2>pathogenic_max&agemax>age_onset_max")
 colnames(result2) <- c("Id", "Allele2_Loci_by_Id")
-
-
 result <- merge(result1,result2)
-
 result$percent <- result$`Allele2>pathogenic_max&agemax>age_onset_max`/result$Allele2_Loci_by_Id*100
-
 result <- calculate_ci(result, successes_col = "Allele2>pathogenic_max&agemax>age_onset_max", trials_col = "Allele2_Loci_by_Id", conf_level = 0.95)
-
 ggplot(result, aes(x = reorder(Id,percent), y = percent, color = Id)) +
   geom_point() +
   geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
   xlab("Id") +  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8), legend.position = "none") +
   ylab("Pathogenic Percentage") + 
   ggtitle("Pathogenic Percentage Over Age by Id with 95% CI ")
+
 
 # 
 # 
@@ -836,6 +877,88 @@ ggplot(result, aes(x = reorder(Id,percent), y = percent, color = Id)) +
 # print(bigresult)
 
 ```
+
+
+### What about the percentage of folks where they are over the size, over the age, AND have the pathogenic motif?
+``` {r motif}
+total_subset <- total[complete.cases(total$AgeMin), ]
+
+total_subset$AgeMin <- as.integer(total_subset$AgeMin) 
+
+
+
+# # Apply the condition to each row of the data frame
+# condition <- (total_subset$Allele2LowerBound >= total_subset$pathogenic_max) & (total_subset$AgeMin >= total_subset$age_onset_max) & (total_subset$motif_norm == total_subset$repeatunit_path_normalized)
+# 
+# # # Use ifelse to print a message for each row where the condition is true
+# resultmotif <- ifelse(condition,
+#                  paste(total_subset$Id, "Allele2 LB:", total_subset$Allele2LowerBound, ", pathogenic_max:", total_subset$pathogenic_max, total_subset$motif_norm, total_subset$repeatunit_path_normalized),
+#                  "")
+# 
+# # # Print the result
+# for (i in seq_along(resultmotif)) {
+#   if (resultmotif[i] != "") {
+#     cat(resultmotif[i], "\n")
+#   }
+# }
+# 
+# # just checking the number is right
+# n_not_missing_age <- table(total$Age != "age_not_available")[2]
+# Create a logical vector to represent whether x > y for each row
+
+Allele2_greater_than_path_min_with_age_and_motif <- (total_subset$Allele2LowerBound >= total_subset$pathogenic_max) & (total_subset$AgeMin >= total_subset$age_onset_max) & (total_subset$motif_norm == total_subset$repeatunit_path_normalized)
+
+table(Allele2_greater_than_path_min_with_age_and_motif)
+
+result1 <- aggregate(cbind(as.numeric(Allele2_greater_than_path_min_with_age_and_motif)), by = list(total_subset$Id), FUN = sum)
+
+sum(result1$V1, na.rm= TRUE)
+
+result2 <- aggregate(cbind(total_subset$disease_id), by = list(total_subset$Id, total_subset$repeatunit_path_normalized), FUN = function(x) sum(!is.na(x)))
+
+
+colnames(result1) <- c("Id", "Allele2>pathogenic_min&agemax>age_onset_max&motif_norm=motif_path")
+colnames(result2) <- c("Id", "pathogenic_motif", "Allele2_Loci_by_Id")
+
+
+result <- merge(result1,result2)
+
+result$percent <- result$`Allele2>pathogenic_min&agemax>age_onset_max&motif_norm=motif_path`/result$Allele2_Loci_by_Id*100
+
+result <- calculate_ci(result, successes_col = "Allele2>pathogenic_min&agemax>age_onset_max&motif_norm=motif_path", trials_col = "Allele2_Loci_by_Id", conf_level = 0.95)
+
+ggplot(result, aes(x = reorder(Id,percent), y = percent, color = pathogenic_motif)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  xlab("Id") +  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) +
+  ylab("Pathogenic Percentage") + 
+  ggtitle("Pathogenic Percentage Over Age by Id AND Motif with 95% CI ")
+
+
+ggplot(subset(result, percent > 5), aes(x = reorder(Id, percent), y = percent, color = pathogenic_motif)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  xlab("Id") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) +
+  ylab("Pathogenic Percentage") + ggtitle("Pathogenic Percentage Over Age by Id AND Motif with 95% CI (Percent > 5)")
+
+ggplot(subset(result, percent <= 5), aes(x = reorder(Id, percent), y = percent, color = pathogenic_motif)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = lower_ci, ymax = upper_ci), width = 0.2) +
+  xlab("Id") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) +
+  ylab("Pathogenic Percentage") + ggtitle("Pathogenic Percentage Over Age by Id AND Motif with 95% CI (Percent <= 5)")
+
+
+
+```
+
+
+
+
+
+
+
+
+
 ## Detour with Confidence Regions
 "First, split it into two columns so we can plot it. I can think of a few plots that might be useful. Probably to start with, does the width of the confidence interval increase with allele2 size?"
 
@@ -863,39 +986,37 @@ ggplot(gnomADSTRcalls, aes(x = gnomADSTRcalls$Allele2, y = (gnomADSTRcalls$Allel
 
 
 
-## Including Plots
 # Do this after motifs have been separated. Then use one of the motifs sizes as the nchar bit. May need to finess RFC1 because it can have different motif sizes
+
+```{r harrietplot}
+# Combine Allele1 and Allele2
 
 gnomADSTRcalls$RefAllele = round((gnomADSTRcalls$End - gnomADSTRcalls$Start_0based)/nchar(gnomADSTRcalls$Motif))
 
-ggplot(gnomADSTRcalls, 
-       aes(x = Allele1,
-           fill = Allele1 == RefAllele)
-) + 
-  geom_bar() + facet_wrap(~Id, ncol=3, scales = "free")
-ggsave('Allele1_isref.pdf', height = 50, width = 20, limitsize = FALSE)
+keep.cols = c('PcrProtocol', 'Age', 'Id', 'Motif', 'RefAllele')
+allele1and2 = rbind(gnomADSTRcalls[,keep.cols], gnomADSTRcalls[,keep.cols])
+allele1and2$Allele_withoutOTR = c(gnomADSTRcalls$Allele1, gnomADSTRcalls$Allele2)
+allele1and2$Allele_withOTR = c(gnomADSTRcalls$Allele1UsingOfftargetRegions, gnomADSTRcalls$Allele2UsingOfftargetRegions)
+allele1and2$Age[allele1and2$Age == 'age_not_available'] = NA
 
-ggplot(subset(gnomADSTRcalls, !is.na(Allele2)), 
-       aes(x = Allele2,
-           fill = Allele2 == RefAllele)
-) + 
-  geom_bar() + facet_wrap(~Id, ncol=3, scales = "free")
-ggsave('Allele2_isref.pdf', height = 50, width = 20, limitsize = FALSE)
+ggplot(subset(allele1and2, !is.na(Allele_withoutOTR)), 
+              aes(x = Allele_withoutOTR,
+               fill = Allele_withoutOTR == RefAllele)) + 
+  geom_bar() + 
+  facet_wrap(~Id, ncol=3, scales = "free") + 
+  labs(x = 'Allele 1 or 2 withoutOTR')
+ggsave('Allele_withoutOTR_isref.pdf', height = 50, width = 20, limitsize = FALSE)
 
-ggplot(gnomADSTRcalls, 
-       aes(x = Allele1UsingOfftargetRegions,
-           fill = Allele1UsingOfftargetRegions == RefAllele)
-       ) + 
-  geom_bar() + facet_wrap(~Id, ncol=3, scales = "free")
-ggsave('Allele1OTR_isref.pdf', height = 50, width = 20, limitsize = FALSE)
+ggplot(subset(allele1and2, !is.na(Allele_withOTR)), 
+       aes(x = Allele_withOTR,
+           fill = Allele_withOTR == RefAllele)) + 
+  geom_bar() + 
+  facet_wrap(~Id, ncol=3, scales = "free") + 
+  labs(x = 'Allele 1 or 2 withOTR')
+ggsave('Allele_withOTR_isref.pdf', height = 50, width = 20, limitsize = FALSE)
 
-ggplot(subset(gnomADSTRcalls, !is.na(Allele2UsingOfftargetRegions)), 
-       aes(x = Allele2UsingOfftargetRegions,
-           fill = Allele2UsingOfftargetRegions == RefAllele)
-) + 
-  geom_bar() + facet_wrap(~Id, ncol=3, scales = "free")
-ggsave('Allele2OTR_isref.pdf', height = 50, width = 20, limitsize = FALSE)
 
+```
 # Fill by motif first, then separate by motif if needed. (edited) 
 
 You can also embed plots, for example:
