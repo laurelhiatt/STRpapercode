@@ -1,0 +1,41 @@
+---
+title: "intersect stuff"
+author: "Laurel Hiatt"
+date: "2023-05-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+repeatmasker taken from https://genome.ucsc.edu/cgi-bin/hgTables?hgsid=1619593963_Rp18pjRu2tWiFRjEIrMcwNBas3Om&clade=mammal&org=Human&db=hg38&hgta_group=rep&hgta_track=knownGene&hgta_table=0&hgta_regionType=range&position=chr22%3A45%2C791%2C940-45%2C798%2C839&hgta_outputType=primaryTable&hgta_outFileName=
+
+
+```{r setup}
+# load bedr library
+
+gnomADSTRcalls <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t', stringsAsFactors = FALSE)
+repeatmasker <- read.csv("/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/ucscrepeatmaskerhg38.bed", sep = '\t', stringsAsFactors = FALSE)
+
+
+intersection <- read.csv("/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/intersectionofgnomADandrepeats.txt", sep = '\t', stringsAsFactors = FALSE, header = FALSE)
+
+
+closest <- read.csv("/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/closestgnomADandrepeats.txt", sep = '\t', stringsAsFactors = FALSE, header = FALSE)
+
+
+closestunder500 <- subset(closest, V27 < 500)
+
+intersection_short <- intersection[, 1:24]
+
+intersection_clean <- unique(intersection_short)
+
+write.table(intersection_clean,"/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/intersection_simple.txt", quote = FALSE, sep = '\t', col.names = FALSE, row.names = FALSE)
+
+write.table(closestunder500,"/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/closestunder500.txt", quote = FALSE, sep = '\t', col.names = FALSE, row.names = FALSE)
+
+```
+

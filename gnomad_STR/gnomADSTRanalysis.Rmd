@@ -43,12 +43,6 @@ calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
 
 ### Summary of gnomADSTRcalls
 
-
-### To do
-- if recessive, are both alleles >?
-
-#### Look at AD, AR
-
 https://gnomad.broadinstitute.org/news/2022-01-the-addition-of-short-tandem-repeat-calls-to-gnomad/
 ```{r import}
 gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t', stringsAsFactors = FALSE)
@@ -215,6 +209,17 @@ subset(total, total$motif_norm == "ATGTT" & total$Id == "YEATS2")
 
 ```
 
+
+## Let's subset the data based on motif, as discussed with Harriet
+Because the CNG motifs seem to be the ones causing the most trouble... let's
+not use those.
+
+``` {r no CNG}
+total <- subset(total, total$motif_norm != "CNG")
+
+gnomADSTRcalls <- subset(gnomADSTRcalls, gnomADSTRcalls$motif_norm != "CNG")
+
+```
 
 ## Let's get a subset of the merged data (optional)
 ``` {r subset}
@@ -740,7 +745,7 @@ ggplot(inheritance_result, aes(x = reorder(Id,percent), y = percent, color = Inh
 ```
 
 ### Let's see about if we parse these out by PCR status
-```{r PCRT}
+```{r PCR}
 
 total_PCR <- subset(total, total$PcrProtocol == "pcr_free" | total$PcrProtocol == "pcr_plus")
 
@@ -1101,7 +1106,7 @@ ggplot(subset(combined_df, percent <= 1), aes(x = reorder(Id, percent), y = perc
 
 ggplot(combined_df) + geom_point(aes(x = Id, y = percent, col=Inheritance)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) + facet_grid(~Motif, scales = "free_x") + scale_x_discrete(guide = guide_axis(check.overlap = TRUE))
 
-ggplot(subset(combined_df, Motif == "CNG")) + geom_point(aes(x = reorder(Id, percent), y = percent, col=Inheritance)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) + facet_grid(~Motif, scales = "free_x") + scale_x_discrete(guide = guide_axis(check.overlap = TRUE)) + xlab("Ids") + ylab("Pathogenic %") + ggtitle("Pathogenic % with Inheritance Logic, 95% CI (CNG only)")
+# ggplot(subset(combined_df, Motif == "CNG")) + geom_point(aes(x = reorder(Id, percent), y = percent, col=Inheritance)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) + facet_grid(~Motif, scales = "free_x") + scale_x_discrete(guide = guide_axis(check.overlap = TRUE)) + xlab("Ids") + ylab("Pathogenic %") + ggtitle("Pathogenic % with Inheritance Logic, 95% CI (CNG only)")
 
 ggplot(subset(combined_df, Motif != "CNG")) + geom_point(aes(x = reorder(Id, percent), y = percent, col=Inheritance)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) + facet_grid(~Motif, scales = "free_x") + scale_x_discrete(guide = guide_axis(check.overlap = TRUE)) + xlab("Ids") + ylab("Pathogenic %") + ggtitle("Pathogenic % with Inheritance Logic, 95% CI (!= CNG)")
 
@@ -1190,6 +1195,22 @@ ggsave('Allele_withOTR_isref.pdf', height = 50, width = 20, limitsize = FALSE)
 
 
 ```
+
+# Visualize things
+"We should go take a look at some of those DMD and TCF4 calls to make sure they look real. Would you be able to output the image file names for a few of the largest ones?" from Harriet
+Here's how to view them:
+In your browser...
+https://gnomad.broadinstitute.org/reads/gnomad_r3/short_tandem_repeats/[locus]/[filename].svg
+For example:
+https://gnomad.broadinstitute.org/reads/gnomad_r3/short_tandem_repeats/YEATS2/4b8c0a9ee270639517caa7472fe90ae9ff1.svg
+Here's how to interpret the images:
+https://gnomad.broadinstitute.org/news/2022-01-the-addition-of-short-tandem-repeat-calls-to-gnomad/#supplemental-details-f[…]ing-read-visualizations 
+
+``` {r visualize}
+
+```
+
+
 # Fill by motif first, then separate by motif if needed. (edited) 
 
 You can also embed plots, for example:
