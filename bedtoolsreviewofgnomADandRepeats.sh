@@ -25,3 +25,14 @@ cut -f 1-6 gnomAD_STR_genotypes__2022_01_20_noheader_sorted.bed > gnomAD_STR_gen
 bedtools closest -a /Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2022_01_20_noheader_sorted_extrasmall.bed -b /Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/ucscrepeatmaskerhg38_filtered_sorted.bed -d > closestgnomADandrepeats.txt
 
 #> windowofgnomADandrepeats.txt
+
+
+
+awk '{ $2 = $2 - 500; $3 = $3 + 500; print}' /Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2022_01_20_noheader_sorted_extrasmall.bed > /Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2022_01_20_noheader_sorted_extrasmall_wiggle.bed
+awk '{ $2 = $2 - 500; $3 = $3 + 500; print}' /Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/ucscrepeatmaskerhg38_filtered_sorted.bed > /Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/ucscrepeatmaskerhg38_filtered_sorted_wiggle.bed
+
+
+
+bedtools intersect -a /Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2022_01_20_noheader_sorted_extrasmall_wiggle.bed -b ucscrepeatmaskerhg38_filtered_sorted_wiggle.bed -header -wb > intersectionofgnomADandrepeats_wiggle.txt
+# perl -p -i -e 's/ /\t/g' ucscrepeatmaskerhg38_filtered_sorted_wiggle.bed
+# perl -p -i -e 's/ /\t/g' gnomAD_STR_genotypes__2022_01_20_noheader_sorted_extrasmall_wiggle.bed
