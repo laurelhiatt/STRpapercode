@@ -45,7 +45,7 @@ calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
 
 https://gnomad.broadinstitute.org/news/2022-01-the-addition-of-short-tandem-repeat-calls-to-gnomad/
 ```{r import}
-gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/gnomAD_STR_genotypes__2022_01_20.tsv.gz', sep = '\t', stringsAsFactors = FALSE)
+gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2022_01_20.tsv', sep = '\t', stringsAsFactors = FALSE)
 
 STR_table <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/STR_table_05012023.csv', stringsAsFactors = FALSE)
 
@@ -1207,7 +1207,22 @@ Here's how to interpret the images:
 https://gnomad.broadinstitute.org/news/2022-01-the-addition-of-short-tandem-repeat-calls-to-gnomad/#supplemental-details-f[…]ing-read-visualizations 
 
 ``` {r visualize}
+library(clipr)
+# get largest allele2 from TCF4 to clipboard
+TCF4_gnomAd <- subset(gnomADSTRcalls, Id == "TCF4")
+TCF4_gnomAd <- TCF4_gnomAd[order(-TCF4_gnomAd$Allele2),]
+clipr::write_clip(head(TCF4_gnomAd))
 
+DMD_gnomAd <- subset(gnomADSTRcalls, Id == "DMD" & Sex == "XY")
+DMD_gnomAd <- DMD_gnomAd[order(-DMD_gnomAd$Allele1),]
+clipr::write_clip(head(DMD_gnomAd))
+
+#https://gnomad.broadinstitute.org/reads/gnomad_r3/short_tandem_repeats/DMD/c7c0bdc287555a02382f282043126a5ce60.svg
+
+
+$https://gnomad.broadinstitute.org/reads/gnomad_r3/short_tandem_repeats/DMD/[filename].svg
+
+$https://gnomad.broadinstitute.org/reads/gnomad_r3/short_tandem_repeats/TCF4/[filename].svg
 ```
 
 
