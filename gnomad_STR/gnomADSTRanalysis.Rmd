@@ -436,8 +436,8 @@ ggplot(total) + geom_point(aes(x = Id, y = Allele2UsingOfftargetRegions, col=typ
 
 ```
 
-``` {r type}
-ggplot(total) + geom_point(aes(x = Id, y = Allele2, col=type)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) + facet_grid(~type, scales = "free_x") + ylim(0,400) + scale_x_discrete(guide = guide_axis(check.overlap = TRUE))
+``` {r type, fig.width = 20}
+ggplot(total) + geom_point(aes(x = Id, y = Allele2, col=motif_norm=="CNG")) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8)) + facet_grid(~type, scales = "free_x") + ylim(0,400) + scale_x_discrete(guide = guide_axis(check.overlap = TRUE))
 
 ```
 

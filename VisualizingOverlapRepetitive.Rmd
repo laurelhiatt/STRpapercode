@@ -1,0 +1,156 @@
+---
+title: "Visualizing STR Loci and Overlaps"
+author: "Laurel Hiatt"
+date: "2023-05-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2022_01_20.tsv', sep = '\t', stringsAsFactors = FALSE)
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r libraries}
+library(Gviz)
+#library(GenomicRanges) req'd pkg for Gviz
+library(rtracklayer)
+# library(IRanges) req'd pkg for Gviz
+library(tidyverse)
+
+extrasmallgnomADSTR <- read.csv("/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2022_01_20_noheader_sorted_extrasmall.bed", sep = "\t", header = FALSE, stringsAsFactors = F)
+
+
+intersection_wiggle <- read.csv("/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/intersectionofgnomADandrepeats_wiggle.txt", sep = "\t", header = FALSE, stringsAsFactors = F)
+
+# Get unique values from column 4
+unique_values <- unique(intersection_wiggle$V4)
+
+# Create new dataframe objects dynamically
+for (value in unique_values) {
+  subset_df <- intersection_wiggle[intersection_wiggle$V4 == value, ]
+  assign(paste0("df_", value), subset_df)
+}
+
+
+# Define a function to create a BED file from a dataframe
+create_RE_bed <- function(df) {
+  bed_df <- df[, c("V7", "V8", "V9", "V21")]
+  colnames(bed_df) <- c("chrom", "start", "end", "id")
+  return(bed_df)
+}
+
+create_reads_bed <- function(df) {
+  bed_df <- df[, c("V1", "V2", "V3")]
+  colnames(bed_df) <- c("chrom", "start", "end")
+  return(bed_df)
+}
+
+create_lociID_bed <- function(df) {
+  bed_df <- separate(df, V6, into = c("chrom", "start", "end"), sep = "[:-]")
+  bed_df <- unique(bed_df[, c("chrom", "start", "end")])
+  return(bed_df)
+}
+
+
+# Get unique values from "Id" column
+ids <- unique(df_TCF4$V22)
+
+# Create a color palette based on unique Ids
+color_palette <- rainbow(length(ids), start = 0.7, end = 0.8)
+
+# Create a named vector to map Ids to colors
+id_colors <- setNames(color_palette, ids)
+
+idtrack <- AnnotationTrack(makeGRangesFromDataFrame(create_lociID_bed(df_TCF4)), name = "RefRegion", fill = "black")
+readtrack <- AnnotationTrack(makeGRangesFromDataFrame(create_reads_bed(df_TCF4)), name = "Diff_Reads")
+atrack <- AnnotationTrack(makeGRangesFromDataFrame(create_RE_bed(df_TCF4)), 
+                          id = df_TCF4$V22, 
+                          fill = id_colors[df_TCF4$V22], 
+                          showFeatureId=TRUE)
+gtrack <- GenomeAxisTrack()
+itrack <- IdeogramTrack(genome = "hg38", chromosome = unique(df_TCF4$V1))
+plotTracks(trackList = list(itrack, gtrack, idtrack, readtrack, atrack), main = "TCF4")
+
+```
+
+## Not Working code
+
+
+```{r bleh}
+
+
+# # Iterate over the dataframes and create BED files
+# for (value in unique_values) {
+#   # Get the corresponding dataframe
+#   df <- get(paste0("df_", value))
+#   
+#   # Create the BED file
+#   bed_filename <- paste0("bed_", value, ".bed")
+#   create_bed_file(df, bed_filename)
+#   
+#   # Create the Gviz plot using the BED file
+#   track <- DataTrack(range = bed_filename, genome = "hg38")
+#   gtrack <- GenomeAxisTrack()
+#   plotTracks(trackList = list(gtrack, track))
+# }
+# 
+# 
+# bed_df <- df_AFF2[, c("V7", "V8", "V9", "V21")]
+# colnames(bed_df) <- c("chrom", "start", "end", "id")
+
+### Stuff that didn't work
+# bed_extrasmallgnomADSTR <- extrasmallgnomADSTR[,1:3]
+# 
+# # Replace 'bed_file_path' with the path to your BED file
+# bed_file_path <- "/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2022_01_20_noheader_sorted_extrasmall.bed"
+# 
+# # Specify the columns to import (1-based indices)
+# columns <- c(1, 2, 3)
+# 
+# # Import the selected columns from the BED file into a GenomicRanges object
+# 
+# colnames(bed_extrasmallgnomADSTR) <- c("chrom", "start", "end")
+# 
+# bed00 <-  makeGRangesFromDataFrame(bed_extrasmallgnomADSTR)
+# #Annotation track, title ="pARmm19"
+# 
+# 
+# 
+# atrack <- AnnotationTrack(bed00, name = "gnomAD_STR")
+# #plotTracks(atrack)
+# gtrack <- GenomeAxisTrack()
+# #plotTracks(list(gtrack, atrack))
+# itrack <- IdeogramTrack(genome = "hg38", chromosome = "chr7")
+# 
+# plotTracks(gtrack, itrack,  from = 26700000, to = 26750000)
+# 
+# 
+# 
+# 
+# 
+# for (i in 1:length(bed00)) {
+#   # Extract the current locus
+#   locus <- bed00[i, ]
+# 
+#   # Create a plot for the current locus
+#   plot_track <- DataTrack(start = locus$V2, end = locus$V3)
+#   # Create the plot with the genomic region track and the current locus track
+#   plot <- plotTracks(trackList = list(gtrack, plot_track), from = locus$V2, to = locus$V3)
+# 
+#   # Save the plot to a file
+#   filename <- paste0("plot_", i, ".pdf")
+#   pdf(filename)
+#   print(plot)
+#   dev.off()
+# }
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
