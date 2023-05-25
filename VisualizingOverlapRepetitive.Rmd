@@ -29,6 +29,9 @@ library(tidyverse)
 
 intersection_wiggle <- read.csv("/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/intersectionofgnomADandrepeats_wiggle.txt", sep = "\t", header = FALSE, stringsAsFactors = F)
 
+intersection_wiggle_simple <- read.csv("/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/intersectionofgnomADandSIMPLErepeats_wiggle.txt", sep = "\t", header = FALSE, stringsAsFactors = F)
+
+#### REPEAT MASKER!!!!
 # Get unique values from column 4
 unique_values <- unique(intersection_wiggle$V4)
 
@@ -59,6 +62,16 @@ create_lociID_bed <- function(df) {
 }
 
 
+### SIMPLE REPEATS
+unique_values_simple <- unique(intersection_wiggle_simple$V4)
+
+# Create new dataframe objects dynamically
+for (value in unique_values_simple) {
+  subset_df <- intersection_wiggle_simple[intersection_wiggle_simple$V4 == value, ]
+  assign(paste0("df_", value, "_simple"), subset_df)
+}
+
+
 # Get unique values from "Id" column
 ids <- unique(df_TCF4$V22)
 
@@ -71,12 +84,15 @@ id_colors <- setNames(color_palette, ids)
 idtrack <- AnnotationTrack(makeGRangesFromDataFrame(create_lociID_bed(df_TCF4)), name = "RefRegion", fill = "black")
 #overlaptrack <- AnnotationTrack(makeGRangesFromDataFrame(create_reads_bed(df_TCF4)), name = "Overlap")
 atrack <- AnnotationTrack(makeGRangesFromDataFrame(create_RE_bed(df_TCF4)), 
-                          id = df_TCF4$V22, 
+                          id = paste(df_TCF4$V20, df_TCF4$V21, sep = "-"), 
                           fill = id_colors[df_TCF4$V22], 
-                          showFeatureId=TRUE)
+                          showFeatureId=TRUE, name = "RepeatMasker")
+btrack <- AnnotationTrack(makeGRangesFromDataFrame(create_RE_bed(df_TCF4_simple)), 
+                          id = df_TCF4_simple$V26,
+                          showFeatureId=TRUE, name = "SimpleRepeats")
 gtrack <- GenomeAxisTrack()
 itrack <- IdeogramTrack(genome = "hg38", chromosome = unique(df_TCF4$V1))
-plotTracks(trackList = list(itrack, gtrack, idtrack, atrack), main = "TCF4")
+plotTracks(trackList = list(itrack, gtrack, idtrack, atrack, btrack), main = "TCF4")
 
 ```
 
@@ -132,7 +148,7 @@ processDataframes <- function(dataframes) {
     
     # Create the tracks for plotting
     idtrack <- AnnotationTrack(makeGRangesFromDataFrame(create_lociID_bed(df)), name = "RefRegion", fill = "black")
-    atrack <- AnnotationTrack(makeGRangesFromDataFrame(bed_df), id = df$V22, fill = id_colors[df$V22], showFeatureId = TRUE)
+    atrack <- AnnotationTrack(makeGRangesFromDataFrame(bed_df), id = paste(df$V20, df$V21, sep = "-"), fill = id_colors[df$V22], showFeatureId = TRUE)
     gtrack <- GenomeAxisTrack()
     itrack <- IdeogramTrack(genome = "hg38", chromosome = unique(df$V1))
     
@@ -178,53 +194,6 @@ decision <- data.frame(
 
 ```
 
-``` {r save as files}
-processDataframes <- function(dataframes) {
-  for (i in seq_along(dataframes)) {
-    df <- dataframes[[i]]
-    
-    # Create a unique identifier for the dataframe
-    df_id <- sub("^df_", "", names(dataframes)[i])
-    
-    # Create the BED file from the dataframe
-    bed_df <- create_RE_bed(df)
-    
-    # Get unique values from the identifier column
-    ids <- unique(df$V22)
-    
-    # Create a color palette based on unique ids
-    color_palette <- colorRampPalette(c("blue", "green"))(length(ids))
-    
-    # Create a named vector to map ids to colors
-    id_colors <- setNames(color_palette, ids)
-    
-    # Create the tracks for plotting
-    idtrack <- AnnotationTrack(makeGRangesFromDataFrame(create_lociID_bed(df)), name = "RefRegion", fill = "black")
-    atrack <- AnnotationTrack(makeGRangesFromDataFrame(bed_df), id = df$V22, fill = id_colors[df$V22], showFeatureId = TRUE)
-    gtrack <- GenomeAxisTrack()
-    itrack <- IdeogramTrack(genome = "hg38", chromosome = unique(df$V1))
-    
-    # Create the plot
-    plotTracks(trackList = list(itrack, gtrack, idtrack, atrack), main = df_id)
-    
-    # Create a folder based on the verdict
-    verdict <- decision$verdict[1]
-    folder_path <- file.path(verdict)
-    dir.create(folder_path, showWarnings = FALSE, recursive = TRUE)
-    
-    # Save the plot in the corresponding folder
-    plot_file <- paste0(df_id, ".pdf")
-    plot_path <- file.path(folder_path, plot_file)
-    pdf(plot_path)
-    plotTracks(trackList = list(itrack, gtrack, idtrack, atrack), main = df_id)
-    dev.off()
-  }
-}
-
-# Usage:
-processDataframes(dataframes)
-
-```
 
 ```{r verdict folder}
 processDataframes <- function(dataframes, verdict_df) {
@@ -254,7 +223,7 @@ processDataframes <- function(dataframes, verdict_df) {
       
       # Create the tracks for plotting
       idtrack <- AnnotationTrack(makeGRangesFromDataFrame(create_lociID_bed(df)), name = "RefRegion", fill = "black")
-      atrack <- AnnotationTrack(makeGRangesFromDataFrame(bed_df), id = df$V22, fill = id_colors[df$V22], showFeatureId = TRUE)
+      atrack <- AnnotationTrack(makeGRangesFromDataFrame(bed_df), id = paste(df$V20, df$V21, sep = "-"), fill = id_colors[df$V22], showFeatureId = TRUE)
       gtrack <- GenomeAxisTrack()
       itrack <- IdeogramTrack(genome = "hg38", chromosome = unique(df$V1))
       
@@ -280,79 +249,3 @@ processDataframes(dataframes, decision)
 
 ```
 
-
-## Not Working code
-
-
-
-```{r bleh}
-
-
-# # Iterate over the dataframes and create BED files
-# for (value in unique_values) {
-#   # Get the corresponding dataframe
-#   df <- get(paste0("df_", value))
-#   
-#   # Create the BED file
-#   bed_filename <- paste0("bed_", value, ".bed")
-#   create_bed_file(df, bed_filename)
-#   
-#   # Create the Gviz plot using the BED file
-#   track <- DataTrack(range = bed_filename, genome = "hg38")
-#   gtrack <- GenomeAxisTrack()
-#   plotTracks(trackList = list(gtrack, track))
-# }
-# 
-# 
-# bed_df <- df_AFF2[, c("V7", "V8", "V9", "V21")]
-# colnames(bed_df) <- c("chrom", "start", "end", "id")
-
-### Stuff that didn't work
-# bed_extrasmallgnomADSTR <- extrasmallgnomADSTR[,1:3]
-# 
-# # Replace 'bed_file_path' with the path to your BED file
-# bed_file_path <- "/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2022_01_20_noheader_sorted_extrasmall.bed"
-# 
-# # Specify the columns to import (1-based indices)
-# columns <- c(1, 2, 3)
-# 
-# # Import the selected columns from the BED file into a GenomicRanges object
-# 
-# colnames(bed_extrasmallgnomADSTR) <- c("chrom", "start", "end")
-# 
-# bed00 <-  makeGRangesFromDataFrame(bed_extrasmallgnomADSTR)
-# #Annotation track, title ="pARmm19"
-# 
-# 
-# 
-# atrack <- AnnotationTrack(bed00, name = "gnomAD_STR")
-# #plotTracks(atrack)
-# gtrack <- GenomeAxisTrack()
-# #plotTracks(list(gtrack, atrack))
-# itrack <- IdeogramTrack(genome = "hg38", chromosome = "chr7")
-# 
-# plotTracks(gtrack, itrack,  from = 26700000, to = 26750000)
-# 
-# 
-# 
-# 
-# 
-# for (i in 1:length(bed00)) {
-#   # Extract the current locus
-#   locus <- bed00[i, ]
-# 
-#   # Create a plot for the current locus
-#   plot_track <- DataTrack(start = locus$V2, end = locus$V3)
-#   # Create the plot with the genomic region track and the current locus track
-#   plot <- plotTracks(trackList = list(gtrack, plot_track), from = locus$V2, to = locus$V3)
-# 
-#   # Save the plot to a file
-#   filename <- paste0("plot_", i, ".pdf")
-#   pdf(filename)
-#   print(plot)
-#   dev.off()
-# }
-
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
