@@ -279,3 +279,36 @@ gtrack <- GenomeAxisTrack()
 itrack <- IdeogramTrack(genome = "hg38", chromosome = unique(combined_df$V1))
 plotTracks(trackList = list(itrack, gtrack, idtrack, atrack), main = "Hoxa13")
 ```
+
+
+``` {r whatever}
+# Combine the three dataframes into one
+combined_df <- unique(rbind(df_ARX_1, df_ARX_2))
+
+library(dplyr)
+
+# Keep one row for each unique combination of V8 and V9
+unique_df <- distinct(combined_df, V8, V9, .keep_all = TRUE)
+
+
+# Get unique IDs from the combined dataframe
+ids <- unique(unique_df$V22)
+
+# Create a color palette based on unique IDs
+color_palette <- rainbow(length(ids), start = 0.7, end = 0.8)
+
+# Create a named vector to map IDs to colors
+id_colors <- setNames(color_palette, ids)
+
+
+idtrack <- AnnotationTrack(makeGRangesFromDataFrame(create_lociID_bed(combined_df)), name = "RefRegion", fill = "black")
+atrack <- AnnotationTrack(makeGRangesFromDataFrame(create_RE_bed(unique_df)), 
+                          id = paste(unique_df$V20, unique_df$V21, sep = "-"), 
+                          fill = id_colors[unique_df$V22], 
+                          showFeatureId = TRUE, name = "RepeatMasker")
+gtrack <- GenomeAxisTrack()
+itrack <- IdeogramTrack(genome = "hg38", chromosome = unique(combined_df$V1))
+plotTracks(trackList = list(itrack, gtrack, idtrack, atrack), main = "ARX")
+
+
+```

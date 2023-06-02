@@ -229,7 +229,6 @@ gnomADSTRcalls <- subset(gnomADSTRcalls, gnomADSTRcalls$motif_norm != "CNG")
 ## Let's Ensure Allele2 > Allele1
 - Check max of allele1 and allele2 (na.rm = TRUE)
 
-
 ``` {r allelecheck}
 #table(gnomADSTRcalls$Allele2 >= gnomADSTRcalls$Allele1, useNA = "ifany")
 #pmax(gnomADSTRcalls$Allele1, gnomADSTRcalls$Allele2, na.rm = TRUE)
@@ -288,10 +287,10 @@ ggplot(gnomADSTRcalls) +
   ggtitle('PCR Protocol')
 
 # 
-# wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
-#              subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2)
-# p <- tidy(wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2, 
-#              subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2))
+wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2,
+             subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2)
+p <- tidy(wilcox.test(subset(gnomADSTRcalls, PcrProtocol == 'pcr_free')$Allele2,
+             subset(gnomADSTRcalls, PcrProtocol == 'pcr_plus')$Allele2))
 
 
 # for (locus in unique(gnomADSTRcalls$Id)) {
@@ -326,7 +325,7 @@ ggplot(results, aes(x = Id, y = p.value, color = Id)) +
 ggplot(results, aes(x = Id, y = -log10(p.value), color = Id)) +
   geom_point() +
   geom_hline(yintercept = -log10(0.05), linetype = "dashed") +
-  labs(x = "Locus", y = "p-value", color = "Locus") +
+  labs(x = "Locus", y = "-log(p-value)", color = "Locus") +
   theme_bw() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + theme(legend.position = "none") + scale_y_continuous(trans='log10')
 ```
 
@@ -1013,15 +1012,6 @@ AR_result1 <- aggregate(cbind(AR_Allele21_greater_than_path_min), by = list(AR_t
 AR_result2 <- aggregate(cbind(AR_total_sex$Allele2), by = list(AR_total_sex$Id, AR_total_sex$repeatunit_path_normalized, AR_total_sex$Inheritance), FUN = function(x) sum(!is.na(x)))
 AR_result <- merge(AR_result1, AR_result2)
 
-# has extra columns for conditions and allele counts
-# AR_total_sex <- subset(total, Inheritance == "AR")
-# AR_Allele21_greater_than_path_min <- (AR_total_sex$Allele2LowerBound >= AR_total_sex$pathogenic_min) & (AR_total_sex$Allele1LowerBound >= AR_total_sex$pathogenic_min) 
-# AR_motifs_match <- (AR_total_sex$motif_norm == AR_total_sex$repeatunit_path_normalized) 
-# AR_result1 <- aggregate(cbind(AR_Allele21_greater_than_path_min, AR_motifs_match), by = list(AR_total_sex$Id), FUN = sum, na.rm=TRUE)
-# AR_result2 <- aggregate(cbind(AR_total_sex$Allele2), by = list(AR_total_sex$Id, AR_total_sex$repeatunit_path_normalized), FUN = function(x) sum(!is.na(x)))
-# AR_result <- merge(AR_result1, AR_result2)
-
-
 XR_XX_total_sex <- subset(total, Inheritance == "XR" & Sex == "XX")
 XR_XX_Allele21_greater_than_path_min <- (XR_XX_total_sex$Allele1LowerBound >= XR_XX_total_sex$pathogenic_min) & 
   (XR_XX_total_sex$Allele2LowerBound >= XR_XX_total_sex$pathogenic_min) & 
@@ -1029,23 +1019,6 @@ XR_XX_Allele21_greater_than_path_min <- (XR_XX_total_sex$Allele1LowerBound >= XR
 XR_XX_result1 <- aggregate(cbind(XR_XX_Allele21_greater_than_path_min), by = list(XR_XX_total_sex$Id), FUN = sum, na.rm=TRUE)
 XR_XX_result2 <- aggregate(cbind(XR_XX_total_sex$Allele1), by = list(XR_XX_total_sex$Id, XR_XX_total_sex$repeatunit_path_normalized, XR_XX_total_sex$Inheritance), FUN = function(x) sum(!is.na(x)))
 XR_XX_result <- merge(XR_XX_result1, XR_XX_result2)
-
-# has extra columns for conditions and allele counts
-# XR_XX_total_sex <- subset(total, Inheritance == "XR" & Sex == "XX")
-# XR_XX_Allele1_greater_than_path_min <- (XR_XX_total_sex$Allele1LowerBound >= XR_XX_total_sex$pathogenic_min) & (XR_XX_total_sex$motif_norm == XR_XX_total_sex$repeatunit_path_normalized)
-# XR_XX_Allele2_greater_than_path_min <- (XR_XX_total_sex$Allele2LowerBound >= XR_XX_total_sex$pathogenic_min) & (XR_XX_total_sex$motif_norm == XR_XX_total_sex$repeatunit_path_normalized)
-# XR_XX_result1 <- aggregate(cbind(XR_XX_Allele1_greater_than_path_min, XR_XX_Allele2_greater_than_path_min), by = list(XR_XX_total_sex$Id), FUN = sum, na.rm=TRUE)
-# XR_XX_result2 <- aggregate(cbind(XR_XX_total_sex$Allele1, XR_XX_total_sex$Allele2), by = list(XR_XX_total_sex$Id, XR_XX_total_sex$repeatunit_path_normalized), FUN = function(x) sum(!is.na(x)))
-# XR_XX_result <- merge(XR_XX_result1, XR_XX_result2)
-
-# has extra columns for conditions and allele counts
-# XR_XY_total_sex <- subset(total, Inheritance == "XR" & Sex == "XY")
-# XR_XY_Allele1_greater_than_path_min <- XR_XY_total_sex$Allele1LowerBound >= XR_XY_total_sex$pathogenic_min
-# XR_XY_Allele2_greater_than_path_min <- XR_XY_total_sex$Allele2LowerBound >= XR_XY_total_sex$pathogenic_min
-# XR_XY_Allele_greater_than_path_min <- XR_XY_Allele1_greater_than_path_min | XR_XY_Allele2_greater_than_path_min
-# XR_XY_result1 <- aggregate(cbind(XR_XY_Allele_greater_than_path_min), by = list(XR_XY_total_sex$Id), FUN = sum, na.rm=TRUE)
-# XR_XY_result2 <- aggregate(cbind(XR_XY_total_sex$Allele1, XR_XY_total_sex$Allele2), by = list(XR_XY_total_sex$Id, XR_XY_total_sex$repeatunit_path_normalized), FUN = function(x) sum(!is.na(x)))
-# XR_XY_result <- merge(XR_XY_result1, XR_XY_result2)
 
 XR_XY_total_sex <- subset(total, Inheritance == "XR" & Sex == "XY")
 XR_XY_Allele1_greater_than_path_min <- (XR_XY_total_sex$Allele1LowerBound >= XR_XY_total_sex$pathogenic_min) & 
@@ -1155,10 +1128,10 @@ ggplot(gnomADSTRcalls, aes(x = Allele2, y = (Allele2HigherBound - Allele2LowerBo
 ```
 
 
-```{r confinterveal spread out}
-ggplot(gnomADSTRcalls, aes(x = gnomADSTRcalls$Allele2, y = (gnomADSTRcalls$Allele2HigherBound - gnomADSTRcalls$Allele2LowerBound), col=Id)) +
-  geom_point() + theme(legend.position = "none") + facet_grid(~Id) + 
-  labs(y = "Width of Allele2 Confidence Interval", x = "Allele2")
+```{r confinterveal spread out, fig.width=15,fig.height=100}
+# ggplot(gnomADSTRcalls, aes(x = gnomADSTRcalls$Allele2, y = (gnomADSTRcalls$Allele2HigherBound - gnomADSTRcalls$Allele2LowerBound), col=Id)) +
+#   geom_point() + theme(legend.position = "none") + facet_grid(~Id) + 
+#   labs(y = "Width of Allele2 Confidence Interval", x = "Allele2")
 ```
 
 
