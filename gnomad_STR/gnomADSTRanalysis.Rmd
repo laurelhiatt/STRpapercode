@@ -1207,6 +1207,20 @@ clipr::write_clip(head(DMD_gnomAd))
 $https://gnomad.broadinstitute.org/reads/gnomad_r3/short_tandem_repeats/DMD/[filename].svg
 
 $https://gnomad.broadinstitute.org/reads/gnomad_r3/short_tandem_repeats/TCF4/[filename].svg
+
+
+
+
+
+subset_ids_DMD <- DMD_gnomAd$PublicSampleId[DMD_gnomAd$AlleleLargest > 59]
+print(subset_ids_DMD)
+
+
+subset_ids_TCF4 <- TCF4_gnomAd$PublicSampleId[TCF4_gnomAd$AlleleLargest > 50]
+print(subset_ids_TCF4)
+
+intersect(subset_ids_DMD, subset_ids_TCF4)
+union(subset_ids_DMD, subset_ids_TCF4)
 ```
 
 
