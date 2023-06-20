@@ -45,7 +45,11 @@ calculate_ci <- function(df, successes_col, trials_col, conf_level, method) {
 
 https://gnomad.broadinstitute.org/news/2022-01-the-addition-of-short-tandem-repeat-calls-to-gnomad/
 ```{r import}
-gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2022_01_20.tsv', sep = '\t', stringsAsFactors = FALSE)
+### full data set that is public
+#gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2022_01_20.tsv', sep = '\t', stringsAsFactors = FALSE)
+### data subset to just 1000G, sent by Ben
+gnomADSTRcalls = read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/gnomAD_STR_genotypes__2023_06_15.tsv', sep = '\t', stringsAsFactors = FALSE)
+
 
 STR_table <- read.csv('/Users/quinlan/Documents/Quinlan-PhD/UDN+STRdb/STRpapercode/gnomad_STR/STR_table_05012023.csv', stringsAsFactors = FALSE)
 
@@ -186,6 +190,13 @@ gnomADSTRcalls$AlleleLargest <- pmax(gnomADSTRcalls$Allele1, gnomADSTRcalls$Alle
 total <- merge(STR_table_clean,gnomADSTRcalls,by="Id")
 
 ```
+# Now we subset if we desire to just samples from public data sets
+``` {r public DBs}
+total <- total[total$PublicProjectId %in% c("Human Genome Diversity Project", "1000 Genomes Project"), ]
+gnomADSTRcalls <- gnomADSTRcalls[gnomADSTRcalls$PublicProjectId %in% c("Human Genome Diversity Project", "1000 Genomes Project"), ]
+
+```
+
 
 ``` {r comparing_norm_motifs}
 
