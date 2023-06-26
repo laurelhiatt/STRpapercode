@@ -241,7 +241,8 @@ gnomADSTRcalls <- subset(gnomADSTRcalls, gnomADSTRcalls$motif_norm != "CNG")
 - Check max of allele1 and allele2 (na.rm = TRUE)
 
 ``` {r allelecheck}
-#table(gnomADSTRcalls$Allele2 >= gnomADSTRcalls$Allele1, useNA = "ifany")
+table(gnomADSTRcalls$Allele2 >= gnomADSTRcalls$Allele1, useNA = "ifany")
+table(gnomADSTRcalls$Allele1 == gnomADSTRcalls$Allele1UsingOfftargetRegions, useNA = "ifany")
 #pmax(gnomADSTRcalls$Allele1, gnomADSTRcalls$Allele2, na.rm = TRUE)
 
 # gnomADSTRcalls_noallele2 <- gnomADSTRcalls[is.na(gnomADSTRcalls$Allele2),]
@@ -1007,6 +1008,7 @@ ggplot(subset(result, percent <= 5), aes(x = reorder(Id, percent), y = percent, 
 
 
 ### Let's do the inheritance pattern analysis
+
 ```{r inheritance, fig.width=12, fig.height=4}
 AD_total_sex <- subset(total, Inheritance == "AD")
 AD_Allele2_greater_than_path_min <- (AD_total_sex$Allele2LowerBound >= AD_total_sex$pathogenic_min) & 
@@ -1032,9 +1034,9 @@ XR_XX_result2 <- aggregate(cbind(XR_XX_total_sex$Allele1), by = list(XR_XX_total
 XR_XX_result <- merge(XR_XX_result1, XR_XX_result2)
 
 XR_XY_total_sex <- subset(total, Inheritance == "XR" & Sex == "XY")
-XR_XY_Allele1_greater_than_path_min <- (XR_XY_total_sex$Allele1LowerBound >= XR_XY_total_sex$pathogenic_min) & 
+XR_XY_Allele1_greater_than_path_min <- (XR_XY_total_sex$Allele1LowerBound >= XR_XY_total_sex$pathogenic_min) &
   (XR_XY_total_sex$repeatunit_path_normalized == XR_XY_total_sex$motif_norm)
-XR_XY_Allele2_greater_than_path_min <- XR_XY_total_sex$Allele2LowerBound >= XR_XY_total_sex$pathogenic_min & 
+XR_XY_Allele2_greater_than_path_min <- XR_XY_total_sex$Allele2LowerBound >= XR_XY_total_sex$pathogenic_min &
   (XR_XY_total_sex$repeatunit_path_normalized == XR_XY_total_sex$motif_norm)
 XR_XY_Allele_greater_than_path_min <- XR_XY_Allele1_greater_than_path_min | XR_XY_Allele2_greater_than_path_min
 XR_XY_result1 <- aggregate(cbind(XR_XY_Allele_greater_than_path_min), by = list(XR_XY_total_sex$Id), FUN = sum, na.rm=TRUE)
@@ -1053,7 +1055,7 @@ XD_result <- merge(XD_result1, XD_result2)
 colnames(AD_result) <- c("Id", "Pathogenic_Count", "Motif", "Inheritance", "Total_Loci")
 colnames(AR_result) <- c("Id", "Pathogenic_Count", "Motif", "Inheritance", "Total_Loci")
 colnames(XR_XX_result) <- c("Id", "Pathogenic_Count", "Motif", "Inheritance", "Total_Loci")
-colnames(XR_XY_result) <- c("Id", "Pathogenic_Count", "Motif", "Inheritance", "Total_Loci")
+#colnames(XR_XY_result) <- c("Id", "Pathogenic_Count", "Motif", "Inheritance", "Total_Loci")
 colnames(XD_result) <- c("Id", "Pathogenic_Count", "Motif", "Inheritance", "Total_Loci")
 
 XR_XY_result$Id <- paste0("XY_", XR_XY_result$Id)
@@ -1061,6 +1063,8 @@ XR_XX_result$Id <- paste0("XX_", XR_XX_result$Id)
 
 # combine data frames
 combined_df <- do.call(rbind, list(AD_result, AR_result, XR_XX_result, XR_XY_result, XD_result))
+# combined_df <- do.call(rbind, list(AD_result, AR_result, XR_XX_result, XD_result))
+
 
 combined_df$percent <- combined_df$Pathogenic_Count/combined_df$Total_Loci*100
 
@@ -1218,6 +1222,7 @@ print(subset_ids_TCF4)
 
 intersect(subset_ids_DMD, subset_ids_TCF4)
 union(subset_ids_DMD, subset_ids_TCF4)
+
 ```
 
 
@@ -1246,20 +1251,24 @@ df_motif <- data.frame(fold_change = fold_change,
                  PublicProjectId = total$PublicProjectId[valid_indices],
                  PublicSampleId = total$PublicSampleId[valid_indices],
                  ReferenceRegion = total$ReferenceRegion[valid_indices],
+               
                  Allele2 = total$Allele2[valid_indices],
                  Allele2UsingOfftargetRegions = total$Allele2UsingOfftargetRegions[valid_indices],
-                 motif_norm= total$motif_norm[valid_indices]
+                 motif_norm= total$motif_norm[valid_indices],
+                 ReadvizFilename = total$ReadvizFilename[valid_indices]
                  )
 
-# Create histogram plot with color by Id
-ggplot(data = df, aes(x = fold_change, fill = Id)) +
-  geom_histogram(binwidth = 1) +
-  scale_fill_manual(values = rainbow(length(unique(df$Id)))) +
-  scale_y_log10() +
-  labs(x = "Fold Change (Allele2UsingOfftargetRegions / Allele2)",
-       y = "Frequency",
-       title = "Distribution of Fold Change") + xlim(0,60) +
-  theme_minimal()
+#   Allele1 = total$Allele1[valid_indices],
+
+# # Create histogram plot with color by Id
+# ggplot(data = df, aes(x = fold_change, fill = Id)) +
+#   geom_histogram(binwidth = 1) +
+#   scale_fill_manual(values = rainbow(length(unique(df$Id)))) +
+#   scale_y_log10() +
+#   labs(x = "Fold Change (Allele2UsingOfftargetRegions / Allele2)",
+#        y = "Frequency",
+#        title = "Distribution of Fold Change") + xlim(0,60) +
+#   theme_minimal()
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
@@ -1276,31 +1285,31 @@ JIGV to do programmatic
 
 ``` {r wrong motif?}
 # Create the histogram plot
-ggplot(total[total$Id == "STARD7", ], aes(x = AlleleLargest, fill = motif_norm)) +
-  geom_histogram(binwidth = 1) +
-  scale_fill_discrete() +
-  labs(x = "AlleleLargest", y = "Frequency", title = "Histogram of AlleleLargest (Id = STARD7)") +
-  theme_minimal()
+# ggplot(total[total$Id == "STARD7", ], aes(x = AlleleLargest, fill = motif_norm)) +
+#   geom_histogram(binwidth = 1) +
+#   scale_fill_discrete() +
+#   labs(x = "AlleleLargest", y = "Frequency", title = "Histogram of AlleleLargest (Id = STARD7)") +
+#   theme_minimal()
 
-ggplot(data = subset(total, Id == "STARD7" & AlleleLargest > 10),
-       aes(x = AlleleLargest, fill = motif_norm)) +
-  geom_histogram(binwidth = 1) +
-  scale_fill_discrete() +
-  labs(x = "AlleleLargest", y = "Frequency", title = "Histogram of AlleleLargest (Id = STARD7)") +
-  theme_minimal()
+# ggplot(data = subset(total, Id == "STARD7" & AlleleLargest > 10),
+#        aes(x = AlleleLargest, fill = motif_norm)) +
+#   geom_histogram(binwidth = 1) +
+#   scale_fill_discrete() +
+#   labs(x = "AlleleLargest", y = "Frequency", title = "Histogram of AlleleLargest (Id = STARD7)") +
+#   theme_minimal()
 
-ggplot(data = subset(total, Id == "STARD7"),
-       aes(x = Allele2UsingOfftargetRegions, fill = motif_norm)) +
-  geom_histogram(binwidth = 1) +
-  scale_fill_discrete() +
-  labs(x = "Allele2UsingOfftargetRegions", y = "Frequency", title = "Histogram of Allele2UsingOfftargetRegions (Id = STARD7)") +
-  theme_minimal() + ylim(0,3) + xlim(10,900)
+# ggplot(data = subset(total, Id == "STARD7"),
+#        aes(x = Allele2UsingOfftargetRegions, fill = motif_norm)) +
+#   geom_histogram(binwidth = 1) +
+#   scale_fill_discrete() +
+#   labs(x = "Allele2UsingOfftargetRegions", y = "Frequency", title = "Histogram of Allele2UsingOfftargetRegions (Id = STARD7)") +
+#   theme_minimal() + ylim(0,3) + xlim(10,900)
 
 ggplot(df_motif[df_motif$Id == "STARD7", ], aes(x = fold_change, fill = motif_norm)) +
   geom_histogram(binwidth = 1) +
   scale_fill_discrete() +
   labs(x = "Fold Change", y = "Frequency", title = "Histogram of Fold Change (Id = STARD7)") +
-  theme_minimal() + ylim(0,4)
+  theme_minimal()
 
 ggplot(data = subset(df_motif, Id == "STARD7" & fold_change > 10),
        aes(x = fold_change, fill = motif_norm)) +
@@ -1309,11 +1318,18 @@ ggplot(data = subset(df_motif, Id == "STARD7" & fold_change > 10),
   labs(x = "Fold Change", y = "Frequency", title = "Histogram of Fold Change < 10(Id = STARD7)") +
   theme_minimal()
 
+# ggplot(data = subset(total, Id == "BEAN1"), aes(x = AlleleLargest, fill = motif_norm)) +
+#   geom_histogram(binwidth = 1) +
+#   scale_fill_discrete() +
+#   labs(x = "AlleleLargest", y = "Frequency", title = "Histogram of AlleleLargest (Id = BEAN1)") +
+#   theme_minimal() 
+
 ggplot(data = subset(total, Id == "BEAN1" & motif_norm != "AAAAT"), aes(x = AlleleLargest, fill = motif_norm)) +
   geom_histogram(binwidth = 1) +
   scale_fill_discrete() +
   labs(x = "AlleleLargest", y = "Frequency", title = "Histogram of AlleleLargest (Id = BEAN1)") +
   theme_minimal() 
+
 
 ggplot(data = subset(df_motif, Id == "BEAN1" & fold_change > 5),
        aes(x = fold_change, fill = motif_norm)) +
@@ -1353,4 +1369,32 @@ ggplot(data = subset(df_motif, Id == "RFC1" & fold_change > 10),
   scale_fill_discrete() +
   labs(x = "Fold Change", y = "Frequency", title = "Histogram of Fold Change > 10 (Id = RFC1)") +
   theme_minimal()
+```
+
+```{r Allele1 ~= Allele1OTR}
+
+ggplot(data = gnomADSTRcalls[gnomADSTRcalls$Allele1 != gnomADSTRcalls$Allele1UsingOfftargetRegions, ], 
+       aes(x = Allele1, fill = Id)) +
+  geom_histogram(binwidth = 1) +
+  scale_fill_discrete() +
+  labs(x = "Allele1", y = "Frequency", title = "Histogram of Allele1 (Unequal to Allele1UsingOfftargetRegions)") +
+  theme_minimal()
+
+
+ggplot(data = gnomADSTRcalls[gnomADSTRcalls$Allele1 != gnomADSTRcalls$Allele1UsingOfftargetRegions, ], 
+       aes(x = Allele1, y = Allele1UsingOfftargetRegions, color = Id)) +
+  geom_jitter() +
+  scale_fill_discrete() +
+  labs(x = "Allele1", y = "Allele1OTR", title = "Allele1 (Unequal to Allele1UsingOfftargetRegions)") +
+  theme_minimal()
+
+
+ggplot(data = gnomADSTRcalls[gnomADSTRcalls$Allele1 != gnomADSTRcalls$Allele1UsingOfftargetRegions, ], 
+       aes(x = Allele1, y = Allele1UsingOfftargetRegions, color = Id)) +
+  geom_jitter() +
+  scale_fill_discrete() +
+  labs(x = "Allele1", y = "Allele1OTR", title = "Allele1 (Unequal to Allele1UsingOfftargetRegions)") +
+  theme_minimal() + xlim(0,300) + ylim(0,300)
+
+data = gnomADSTRcalls[gnomADSTRcalls$Allele1 != gnomADSTRcalls$Allele1UsingOfftargetRegions, ]
 ```
